@@ -23,7 +23,15 @@ export interface SendOptions {
 
 export interface ReadOptions { 
   client: number,
-  expectLen: number 
+  expectLen: number,
+  /**
+   * timeout in seconds.
+   * 
+   * default: 10
+   * 
+   * only ios supports timeout.
+   */
+  timeout?: number
 }
 
 export interface ReadResult {

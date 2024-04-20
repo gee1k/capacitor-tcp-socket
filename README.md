@@ -119,10 +119,11 @@ disconnect(options: DisconnectOptions) => Promise<DisconnectResult>
 
 #### ReadOptions
 
-| Prop            | Type                |
-| --------------- | ------------------- |
-| **`client`**    | <code>number</code> |
-| **`expectLen`** | <code>number</code> |
+| Prop            | Type                | Description                                                |
+| --------------- | ------------------- | ---------------------------------------------------------- |
+| **`client`**    | <code>number</code> |                                                            |
+| **`expectLen`** | <code>number</code> |                                                            |
+| **`timeout`**   | <code>number</code> | timeout in seconds. default: 10 only ios supports timeout. |
 
 
 #### DisconnectResult

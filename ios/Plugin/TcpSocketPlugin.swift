@@ -56,8 +56,9 @@ public class TcpSocketPlugin: CAPPlugin {
         let client = clients[clientIndex]
         
         let expectLen = call.getInt("expectLen", 1024)
+        let timeout = call.getInt("timeout", 10)
         
-        guard let response = client.read(expectLen, timeout: 10),
+        guard let response = client.read(expectLen, timeout: timeout),
                 let data = String(bytes: response, encoding: .utf8) else {
             call.resolve(["result": ""])
             return
