@@ -2,14 +2,12 @@ package com.svend.plugins.tcp.socket;
 
 import android.Manifest;
 import android.util.Log;
-
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.Permission;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
@@ -19,20 +17,17 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
-@CapacitorPlugin(name = "TcpSocket", permissions = {
-        @Permission(
-                alias = "network",
-                strings = { Manifest.permission.ACCESS_NETWORK_STATE }
-        )
-})
+@CapacitorPlugin(
+    name = "TcpSocket",
+    permissions = { @Permission(alias = "network", strings = { Manifest.permission.ACCESS_NETWORK_STATE }) }
+)
 public class TcpSocketPlugin extends Plugin {
-
 
     private Socket socket;
     private DataOutputStream mBufferOut;
     private List<Socket> clients = new ArrayList<>();
 
-    @PluginMethod()
+    @PluginMethod
     public void connect(PluginCall call) {
         String ipAddress = call.getString("ipAddress");
 
@@ -43,7 +38,7 @@ public class TcpSocketPlugin extends Plugin {
         Integer port = call.getInt("port", 9100);
 
         try {
-            if (socket != null && socket.isConnected())   {
+            if (socket != null && socket.isConnected()) {
                 socket.close();
             }
             socket = new Socket(ipAddress, port);
@@ -59,7 +54,7 @@ public class TcpSocketPlugin extends Plugin {
         call.resolve(ret);
     }
 
-    @PluginMethod()
+    @PluginMethod
     public void send(final PluginCall call) {
         final Integer client = call.getInt("client", -1);
         final String msg = call.getString("data", "");
@@ -101,7 +96,7 @@ public class TcpSocketPlugin extends Plugin {
         thread.start();
     }
 
-    @PluginMethod()
+    @PluginMethod
     public void read(final PluginCall call) {
         final Integer client = call.getInt("client", -1);
         final Integer length = call.getInt("expectLen", 1024);
@@ -143,14 +138,14 @@ public class TcpSocketPlugin extends Plugin {
         thread.start();
     }
 
-    @PluginMethod()
+    @PluginMethod
     public void disconnect(PluginCall call) {
         final Integer client = call.getInt("client", -1);
         if (client == -1) {
             call.reject("No client specified");
             return;
         }
-        if (clients.isEmpty())  {
+        if (clients.isEmpty()) {
             call.reject("Socket not connected");
             return;
         }

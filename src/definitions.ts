@@ -5,43 +5,42 @@ export interface TcpSocketPlugin {
   disconnect(options: DisconnectOptions): Promise<DisconnectResult>;
 }
 
-
 // types
 
-export interface ConnectOptions { 
-  ipAddress: string,
-  port?: number 
+export interface ConnectOptions {
+  ipAddress: string;
+  port?: number;
 }
 export interface ConnectResult {
   client: number;
 }
 
-export interface SendOptions { 
-  client: number,
-  data: string 
+export interface SendOptions {
+  client: number;
+  data: string;
 }
 
-export interface ReadOptions { 
-  client: number,
-  expectLen: number,
+export interface ReadOptions {
+  client: number;
+  expectLen: number;
   /**
    * timeout in seconds.
-   * 
+   *
    * default: 10
-   * 
+   *
    * only ios supports timeout.
    */
-  timeout?: number
+  timeout?: number;
 }
 
 export interface ReadResult {
-  result?: string
+  result?: string;
 }
 
-export interface DisconnectOptions { 
-  client: number 
+export interface DisconnectOptions {
+  client: number;
 }
 
-export interface DisconnectResult { 
-  client: number
+export interface DisconnectResult {
+  client: number;
 }
