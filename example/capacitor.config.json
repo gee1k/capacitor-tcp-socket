@@ -1,11 +1,10 @@
 {
-  "appId": "com.example.plugin",
-  "appName": "example",
-  "bundledWebRuntime": false,
+  "appId": "com.svend.capacitor.tcp.example",
+  "appName": "TCP Example",
   "webDir": "dist",
   "plugins": {
     "SplashScreen": {
-      "launchShowDuration": 0
+      "launchAutoHide": false
     }
   }
 }

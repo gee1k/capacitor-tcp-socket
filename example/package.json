@@ -2,7 +2,7 @@
   "name": "capacitor-app",
   "version": "1.0.0",
   "description": "An Amazing Capacitor App",
-  "main": "index.js",
+  "type": "module",
   "keywords": [
     "capacitor",
     "mobile"
@@ -13,16 +13,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@capacitor/core": "latest",
+    "@capacitor/android": "^7.2.0",
     "@capacitor/camera": "latest",
+    "@capacitor/core": "latest",
+    "@capacitor/ios": "^7.2.0",
     "@capacitor/splash-screen": "latest",
-    "capacitor-tcp-socket": "file:..",
-    "@capacitor/ios": "^5.0.0",
-    "@capacitor/android": "^5.0.0"
+    "capacitor-tcp-socket": "file:../"
   },
   "devDependencies": {
     "@capacitor/cli": "latest",
-    "vite": "^2.9.13"
+    "vite": "^5.4.2"
   },
   "author": "",
   "license": "ISC"
