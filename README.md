@@ -49,7 +49,7 @@ const readData = async (clientId: number) => {
     const result = await TcpSocket.read({
       client: clientId,
       expectLen: 1024,  // Expected maximum bytes to read
-      timeout: 10       // Timeout in seconds, iOS only
+      timeout: 10       // Timeout in seconds
     });
     console.log('Received data:', result.result);
     return result.result;
@@ -185,7 +185,8 @@ const binaryFromHex = hexToBytes(result.result);
 
 ### Android
 - Android implementation uses the standard Java Socket API.
-- Currently, the read timeout parameter is not supported on Android.
+- `read` supports the `timeout` option. If no data arrives in time, `read` returns an empty `result`.
+- If the server closes the connection, `read` fails with error code `EOF`.
 
 ## Example Project
 

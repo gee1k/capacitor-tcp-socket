@@ -118,7 +118,6 @@ export interface ReadOptions {
   /**
    * Read timeout in seconds
    * @default 10
-   * @note Only available on iOS platform
    */
   timeout?: number;
   

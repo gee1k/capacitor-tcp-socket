@@ -8,12 +8,12 @@ import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.Permission;
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 import java.nio.charset.StandardCharsets;
@@ -29,6 +29,7 @@ import android.util.Base64;
 )
 public class TcpSocketPlugin extends Plugin {
     private static final String TAG = "TcpSocketPlugin";
+    public static final String READ_EOF_ERROR_CODE = "EOF";
     private List<Socket> clients = new ArrayList<>();
     
     // Supported data encoding types
@@ -170,7 +171,7 @@ public class TcpSocketPlugin extends Plugin {
      * Parameters:
      * - client: Client index
      * - expectLen: Expected number of bytes to read, default 1024
-     * - timeout: Timeout in seconds (Note: Android implementation doesn't support timeout yet)
+     * - timeout: Read timeout in seconds, default 10
      * - encoding: Preferred encoding for returned data (utf8, base64, hex), default is utf8
      * Returns:
      * - result: Data read
@@ -180,6 +181,7 @@ public class TcpSocketPlugin extends Plugin {
     public void read(final PluginCall call) {
         final Integer clientIndex = call.getInt("client", -1);
         final Integer length = call.getInt("expectLen", 1024);
+        final int timeoutSec = call.getInt("timeout", 10);
 
         if (clientIndex == -1) {
             call.reject("Client not specified or invalid index");
@@ -206,24 +208,29 @@ public class TcpSocketPlugin extends Plugin {
             public void run() {
                 try {
                     final Socket socket = clients.get(clientIndex);
-                    DataInputStream bufferIn = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
+                    socket.setSoTimeout(timeoutSec * 1000);
+                    InputStream inputStream = socket.getInputStream();
                     byte[] bytes = new byte[length];
-                    int read = bufferIn.read(bytes, 0, length);
+                    int read = inputStream.read(bytes, 0, length);
+
+                    if (read == -1) {
+                        call.reject("Connection closed", READ_EOF_ERROR_CODE);
+                        return;
+                    }
 
                     JSObject ret = new JSObject();
                     String result = "";
                     String actualEncoding = encoding.getValue();
-                    
+
                     if (read > 0) {
                         byte[] actualData = new byte[read];
                         System.arraycopy(bytes, 0, actualData, 0, read);
-                        
+
                         switch (encoding) {
                             case UTF8:
                                 try {
                                     result = new String(actualData, StandardCharsets.UTF_8);
                                 } catch (Exception e) {
-                                    // If UTF-8 conversion fails, fall back to base64
                                     result = Base64.encodeToString(actualData, Base64.NO_WRAP);
                                     actualEncoding = DataEncoding.BASE64.getValue();
                                 }
@@ -236,9 +243,14 @@ public class TcpSocketPlugin extends Plugin {
                                 break;
                         }
                     }
-                    
+
                     ret.put("result", result);
                     ret.put("encoding", actualEncoding);
+                    call.resolve(ret);
+                } catch (SocketTimeoutException e) {
+                    JSObject ret = new JSObject();
+                    ret.put("result", "");
+                    ret.put("encoding", encoding.getValue());
                     call.resolve(ret);
                 } catch (IOException e) {
                     Log.e(TAG, "Read failed: " + e.getMessage());
