@@ -1,21 +1,135 @@
-import { Capacitor } from '@capacitor/core';
 import { TcpSocket } from 'capacitor-tcp-socket';
 
-// Uses the installed plugin and real TCP server. No browser socket replacement.
-export async function runTcpSmokeTest(ipAddress, port) {
-  await runTcpServerSmokeTest();
-  const { client } = await TcpSocket.connect({ ipAddress, port });
-  const passed = ['TCP server listen, accept, bidirectional I/O and close'];
-  const readExact = async (expected, encoding, expectLen = 1024) => {
-    if (encoding === 'base64') expected = atob(expected);
-    let received = '';
-    while (received.length < expected.length) {
-      const response = await TcpSocket.read({ client, expectLen, timeout: 5, encoding });
-      if (!response.result) throw new Error('Timed out waiting for echo');
-      received += encoding === 'base64' ? atob(response.result) : response.result;
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+async function rejects(action, code) {
+  try {
+    await action();
+  } catch (error) {
+    if (error.code === code) return;
+    throw new Error(`Expected ${code}, received ${error.code}: ${error.message}`);
+  }
+  throw new Error(`Expected ${code} rejection`);
+}
+async function readExact(client, expected, encoding = 'utf8', expectLen = 65536) {
+  let received = '';
+  const target = encoding === 'base64' ? atob(expected) : expected;
+  while (received.length < target.length) {
+    const response = await TcpSocket.read({ client, expectLen, timeout: 5, encoding });
+    if (!response.result) throw new Error('A successful read must contain data');
+    if (response.encoding !== encoding) throw new Error('Unexpected encoding');
+    received += encoding === 'base64' ? atob(response.result) : response.result;
+  }
+  if (received !== target) throw new Error('TCP byte-stream mismatch');
+}
+
+// Same contract suite runs through the actual native bridge on both platforms.
+async function runTcpContractTest() {
+  for (const options of [
+    { ipAddress: '' },
+    { ipAddress: '127.0.0.1', port: -1 },
+    { ipAddress: '127.0.0.1', port: 65536 },
+    { ipAddress: '127.0.0.1', port: 1.5 },
+    { ipAddress: '127.0.0.1', timeout: -1 },
+    { ipAddress: '127.0.0.1', timeout: Infinity },
+  ])
+    await rejects(() => TcpSocket.connect(options), 'INVALID_ARGUMENT');
+  await rejects(() => TcpSocket.read({ client: 2147483647 }), 'INVALID_ARGUMENT');
+  const { server, port } = await TcpSocket.listen({ ipAddress: '127.0.0.1' });
+  let outgoing, incoming, replacement;
+  try {
+    await rejects(() => TcpSocket.listen({ ipAddress: '127.0.0.1', port }), 'LISTEN_FAILED');
+    await rejects(() => TcpSocket.accept({ server, timeout: 1 }), 'TIMEOUT');
+    const pending = TcpSocket.accept({ server, timeout: 5 });
+    await rejects(() => TcpSocket.accept({ server, timeout: 1 }), 'BUSY');
+    outgoing = (await TcpSocket.connect({ ipAddress: '127.0.0.1', port, timeout: 5 })).client;
+    incoming = (await pending).client;
+    for (const options of [
+      { expectLen: 0 },
+      { expectLen: -1 },
+      { expectLen: 1.2 },
+      { timeout: -1 },
+      { timeout: 0.2 },
+      { encoding: 'bogus' },
+    ]) {
+      await rejects(() => TcpSocket.read({ client: incoming, ...options }), 'INVALID_ARGUMENT');
     }
-    if (received !== expected) throw new Error(`Echo mismatch: ${received} != ${expected}`);
-  };
+    for (const options of [
+      { data: 'f', encoding: 'hex' },
+      { data: 'xx', encoding: 'hex' },
+      { data: '!!!', encoding: 'base64' },
+      { data: 'Zh==', encoding: 'base64' },
+      { data: 'A', encoding: 'UTF8' },
+      { data: null },
+    ])
+      await rejects(() => TcpSocket.send({ client: outgoing, ...options }), 'INVALID_ARGUMENT');
+    for (const encoding of ['utf8', 'hex', 'base64']) await TcpSocket.send({ client: outgoing, data: '', encoding });
+    await rejects(() => TcpSocket.read({ client: incoming, timeout: 1 }), 'TIMEOUT');
+    // The receive that timed out must not consume/drop subsequent data.
+    await TcpSocket.send({ client: outgoing, data: 'ff', encoding: 'hex' });
+    const invalidUTF8 = await TcpSocket.read({ client: incoming, timeout: 5 });
+    if (invalidUTF8.encoding !== 'base64' || invalidUTF8.result !== '/w==') throw new Error('UTF-8 fallback mismatch');
+
+    let settled = false;
+    const forever = TcpSocket.read({ client: incoming, expectLen: 1, timeout: 0 }).then((value) => {
+      settled = true;
+      return value;
+    });
+    await delay(100);
+    if (settled) throw new Error('timeout=0 must wait for data');
+    await TcpSocket.send({ client: outgoing, data: 'Z' });
+    if ((await forever).result !== 'Z') throw new Error('Indefinite read mismatch');
+
+    const first = TcpSocket.read({ client: incoming, expectLen: 1, timeout: 5 });
+    const second = TcpSocket.read({ client: incoming, expectLen: 1, timeout: 5 });
+    await TcpSocket.send({ client: outgoing, data: 'ab' });
+    if ((await first).result !== 'a' || (await second).result !== 'b') throw new Error('Read ordering mismatch');
+    await Promise.all(['A', 'B', 'C'].map((data) => TcpSocket.send({ client: outgoing, data })));
+    await readExact(incoming, 'ABC', 'utf8', 1);
+    await Promise.all([
+      TcpSocket.send({ client: outgoing, data: 'left' }),
+      TcpSocket.send({ client: incoming, data: 'right' }),
+    ]);
+    await Promise.all([readExact(incoming, 'left'), readExact(outgoing, 'right')]);
+    const large = '0123456789abcdef'.repeat(32768); // 256 KiB binary, exceeds one native read chunk.
+    await TcpSocket.send({ client: outgoing, data: large, encoding: 'hex' });
+    await readExact(incoming, large, 'hex', 2147483647);
+
+    const stopped = rejects(() => TcpSocket.accept({ server, timeout: 0 }), 'CLOSED');
+    await TcpSocket.closeServer({ server });
+    await stopped;
+    await TcpSocket.closeServer({ server });
+    await rejects(() => TcpSocket.accept({ server }), 'CLOSED');
+    await TcpSocket.send({ client: incoming, data: 'still open' });
+    await readExact(outgoing, 'still open');
+    replacement = (await TcpSocket.listen({ ipAddress: '127.0.0.1', port })).server;
+    await TcpSocket.closeServer({ server: replacement });
+    await rejects(() => TcpSocket.connect({ ipAddress: '127.0.0.1', port, timeout: 2 }), 'CONNECT_FAILED');
+
+    const closed = rejects(() => TcpSocket.read({ client: incoming, timeout: 0 }), 'CLOSED');
+    const queued = rejects(() => TcpSocket.read({ client: incoming, timeout: 0 }), 'CLOSED');
+    await TcpSocket.disconnect({ client: incoming });
+    await Promise.all([closed, queued]);
+    await TcpSocket.disconnect({ client: incoming });
+    await rejects(() => TcpSocket.read({ client: incoming }), 'CLOSED');
+    await rejects(() => TcpSocket.send({ client: incoming, data: '' }), 'CLOSED');
+    await rejects(() => TcpSocket.read({ client: outgoing, timeout: 5 }), 'EOF');
+  } finally {
+    await TcpSocket.closeServer({ server });
+    if (replacement !== undefined) await TcpSocket.closeServer({ server: replacement });
+    if (incoming !== undefined) await TcpSocket.disconnect({ client: incoming });
+    if (outgoing !== undefined) await TcpSocket.disconnect({ client: outgoing });
+  }
+}
+
+export async function runTcpSmokeTest(ipAddress, port) {
+  // The browser should report the native API as unsupported before native-only assertions.
+  const probe = await TcpSocket.listen();
+  await TcpSocket.closeServer(probe);
+  await runTcpContractTest();
+  const { client } = await TcpSocket.connect({ ipAddress, port });
+  const passed = [
+    'Unified V8 contract: validation, errors, FIFO I/O, cancellation, 256 KiB transfer, server lifecycle',
+  ];
   try {
     for (const [encoding, data] of [
       ['utf8', 'first echo'],
@@ -24,92 +138,21 @@ export async function runTcpSmokeTest(ipAddress, port) {
       ['base64', 'AAEC/w=='],
     ]) {
       await TcpSocket.send({ client, data, encoding });
-      await readExact(data, encoding);
+      await readExact(client, data, encoding);
       passed.push(`${encoding}: ${data}`);
     }
-    const burst = 'buffered-read-regression';
-    await TcpSocket.send({ client, data: burst });
-    await readExact(burst, 'utf8', 4);
-    passed.push('Repeated short reads preserve remaining bytes');
-    const empty = await TcpSocket.read({ client, expectLen: 1024, timeout: 1 });
-    if (empty.result !== '') throw new Error('Expected an empty response on timeout');
+    await TcpSocket.send({ client, data: 'buffered-read-regression' });
+    await readExact(client, 'buffered-read-regression', 'utf8', 4);
+    await rejects(() => TcpSocket.read({ client, timeout: 1 }), 'TIMEOUT');
     await TcpSocket.send({ client, data: 'DELAY\n' });
-    await readExact('DELAY\n', 'utf8');
-    passed.push('Timeout followed by delayed data');
+    await readExact(client, 'DELAY\n');
     await TcpSocket.send({ client, data: 'CLOSE\n' });
-    if (Capacitor.getPlatform() === 'ios') {
-      const eof = await TcpSocket.read({ client, expectLen: 1024, timeout: 5 });
-      if (eof.result !== '') throw new Error('Legacy iOS EOF must return an empty result');
-      passed.push('Legacy iOS EOF remains compatible');
-    }
-    try {
-      await TcpSocket.read({ client, expectLen: 1024, timeout: 5, rejectOnEOF: true });
-      throw new Error('Expected EOF rejection');
-    } catch (error) {
-      if (error.code !== 'EOF') throw error;
-    }
-    passed.push('Peer close reports EOF');
+    await rejects(() => TcpSocket.read({ client, timeout: 5 }), 'EOF');
+    await TcpSocket.send({ client, data: 'AFTER_EOF\n' });
+    passed.push('Short reads, timeout recovery, EOF and half-close send');
     return passed;
   } finally {
     await TcpSocket.disconnect({ client });
-    if (Capacitor.getPlatform() === 'ios') await TcpSocket.disconnect({ client });
-  }
-}
-
-async function runTcpServerSmokeTest() {
-  const { server, port } = await TcpSocket.listen({ ipAddress: '127.0.0.1', port: 0 });
-  let outgoing;
-  let incoming;
-  let closed = false;
-  const readText = async (client, expected) => {
-    let value = '';
-    while (value.length < expected.length) {
-      const response = await TcpSocket.read({ client, expectLen: 2, timeout: 5, encoding: 'hex' });
-      if (!response.result) throw new Error('Server round trip timed out');
-      value += response.result;
-    }
-    if (value !== expected) throw new Error('Server round trip mismatch');
-  };
-  try {
-    try {
-      await TcpSocket.accept({ server, timeout: 1 });
-      throw new Error('Accept should time out');
-    } catch (error) { if (error.code !== 'TIMEOUT') throw error; }
-    const pending = TcpSocket.accept({ server, timeout: 5 });
-    outgoing = (await TcpSocket.connect({ ipAddress: '127.0.0.1', port })).client;
-    incoming = (await pending).client;
-    if (Capacitor.getPlatform() === 'ios') {
-      for (const timeout of [0, -1]) {
-        const poll = await TcpSocket.read({ client: outgoing, expectLen: 2, timeout });
-        if (poll.result !== '') throw new Error('Legacy iOS nonblocking poll failed');
-      }
-      await TcpSocket.send({ client: outgoing, data: '' });
-      await TcpSocket.send({ client: outgoing, data: 'f', encoding: 'hex' });
-      await readText(incoming, '0f');
-    }
-    await TcpSocket.send({ client: outgoing, data: '00017fff', encoding: 'hex' });
-    await readText(incoming, '00017fff');
-    await TcpSocket.send({ client: incoming, data: 'e4b8ade69687', encoding: 'hex' });
-    await readText(outgoing, 'e4b8ade69687');
-    // Closing the listener rejects accept but does not close established clients.
-    const stopped = TcpSocket.accept({ server, timeout: 0 }).then(
-      () => { throw new Error('Closed listener accepted a connection'); },
-      error => { if (error.code !== 'CLOSED') throw error; },
-    );
-    await TcpSocket.closeServer({ server });
-    closed = true;
-    await stopped;
-    await TcpSocket.send({ client: incoming, data: '41', encoding: 'hex' });
-    await readText(outgoing, '41');
-  } finally {
-    if (!closed) await TcpSocket.closeServer({ server });
-    if (incoming !== undefined) await TcpSocket.disconnect({ client: incoming });
-    if (outgoing !== undefined) {
-      await TcpSocket.disconnect({ client: outgoing });
-      if (Capacitor.getPlatform() === 'ios') {
-        const closedRead = await TcpSocket.read({ client: outgoing, expectLen: 2 });
-        if (closedRead.result !== '') throw new Error('Legacy iOS read after disconnect failed');
-      }
-    }
+    await TcpSocket.disconnect({ client });
   }
 }

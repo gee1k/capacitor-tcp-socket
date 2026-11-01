@@ -255,7 +255,7 @@ window.customElements.define(
           
           <div class="form-group">
             <label for="read-timeout">Timeout (seconds)</label>
-            <input type="number" id="read-timeout" value="5" min="1">
+            <input type="number" id="read-timeout" value="5" min="0">
           </div>
           
           <div class="button-group">

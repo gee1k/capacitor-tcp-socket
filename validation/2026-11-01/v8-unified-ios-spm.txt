@@ -1,0 +1,177 @@
+GUI passed 21:25:54
+Actual native bridge trace. Error codes in the suite are expected assertions.
+Large payloads are asserted byte-for-byte by smoke-test.js; omitted here for size.
+
+  To Native ->  TcpSocket listen 88006408
+⚡️  TO JS {"port":63065,"server":0}
+⚡️  To Native ->  TcpSocket closeServer 88006409
+⚡️  TO JS {"server":0}
+⚡️  To Native ->  TcpSocket read 88006410
+ERROR MESSAGE:  {"message":"Unknown client","code":"INVALID_ARGUMENT","errorMessage":"Unknown client"}
+⚡️  [error] - {"message":"Unknown client","code":"INVALID_ARGUMENT","errorMessage":"Unknown client"}
+⚡️  To Native ->  TcpSocket listen 88006411
+⚡️  TO JS {"port":63066,"server":1}
+⚡️  To Native ->  TcpSocket listen 88006412
+ERROR MESSAGE:  {"message":"The operation couldn’t be completed. (Network.NWError error 48 - Address already in use)","errorMessage":"The operation couldn’t be completed. (Network.NWError error 48 - Address already in use)","code":"LISTEN_FAILED"}
+⚡️  [error] - {"message":"The operation couldn’t be completed. (Network.NWError error 48 - Address already in use)","errorMessage":"The operation couldn’t be completed. (Network.NWError error 48 - Address already in use)","code":"LISTEN_FAILED"}
+⚡️  To Native ->  TcpSocket accept 88006413
+ERROR MESSAGE:  {"errorMessage":"Accept timed out","code":"TIMEOUT","message":"Accept timed out"}
+⚡️  [error] - {"errorMessage":"Accept timed out","code":"TIMEOUT","message":"Accept timed out"}
+⚡️  To Native ->  TcpSocket accept 88006414
+⚡️  To Native ->  TcpSocket accept 88006415
+ERROR MESSAGE:  {"message":"An accept is already pending","code":"BUSY","errorMessage":"An accept is already pending"}
+⚡️  [error] - {"message":"An accept is already pending","code":"BUSY","errorMessage":"An accept is already pending"}
+⚡️  To Native ->  TcpSocket connect 88006416
+⚡️  TO JS {"client":0}
+⚡️  TO JS {"client":1}
+⚡️  To Native ->  TcpSocket send 88006417
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket send 88006418
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket send 88006419
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 88006420
+ERROR MESSAGE:  {"message":"Operation timed out","code":"TIMEOUT","errorMessage":"Operation timed out"}
+⚡️  To Native ->  TcpSocket send 88006421
+⚡️  [error] - {"message":"Operation timed out","code":"TIMEOUT","errorMessage":"Operation timed out"}
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 88006422
+⚡️  TO JS {"encoding":"base64","result":"\/w=="}
+⚡️  To Native ->  TcpSocket read 88006423
+⚡️  To Native ->  TcpSocket send 88006424
+⚡️  TO JS undefined
+⚡️  TO JS {"result":"Z","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 88006425
+⚡️  To Native ->  TcpSocket read 88006426
+⚡️  To Native ->  TcpSocket send 88006427
+⚡️  TO JS undefined
+⚡️  TO JS {"encoding":"utf8","result":"a"}
+⚡️  TO JS {"result":"b","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket send 88006428
+⚡️  To Native ->  TcpSocket send 88006429
+⚡️  To Native ->  TcpSocket send 88006430
+⚡️  TO JS undefined
+⚡️  TO JS undefined
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 88006431
+⚡️  TO JS {"result":"A","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 88006432
+⚡️  TO JS {"result":"B","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 88006433
+⚡️  TO JS {"result":"C","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket send 88006434
+⚡️  To Native ->  TcpSocket send 88006435
+⚡️  TO JS undefined
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 88006436
+⚡️  To Native ->  TcpSocket read 88006437
+⚡️  TO JS {"result":"left","encoding":"utf8"}
+⚡️  TO JS {"result":"right","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket send 88006438
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 88006439
+⚡️  TO JS {"result":"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234
+⚡️  To Native ->  TcpSocket read 88006440
+⚡️  TO JS {"result":"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234
+⚡️  To Native ->  TcpSocket read 88006441
+⚡️  TO JS {"result":"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234
+⚡️  To Native ->  TcpSocket read 88006442
+⚡️  TO JS {"result":"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234
+⚡️  To Native ->  TcpSocket accept 88006443
+⚡️  To Native ->  TcpSocket closeServer 88006444
+⚡️  TO JS {"server":1}
+ERROR MESSAGE:  {"message":"Server closed","code":"CLOSED","errorMessage":"Server closed"}
+⚡️  [error] - {"message":"Server closed","code":"CLOSED","errorMessage":"Server closed"}
+⚡️  To Native ->  TcpSocket closeServer 88006445
+⚡️  TO JS {"server":1}
+⚡️  To Native ->  TcpSocket accept 88006446
+ERROR MESSAGE:  {"code":"CLOSED","errorMessage":"Server closed","message":"Server closed"}
+⚡️  [error] - {"code":"CLOSED","errorMessage":"Server closed","message":"Server closed"}
+⚡️  To Native ->  TcpSocket send 88006447
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 88006448
+⚡️  TO JS {"result":"still open","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket listen 88006449
+⚡️  TO JS {"server":2,"port":63066}
+⚡️  To Native ->  TcpSocket closeServer 88006450
+⚡️  TO JS {"server":2}
+⚡️  To Native ->  TcpSocket connect 88006451
+ERROR MESSAGE:  {"message":"The operation couldn’t be completed. (Network.NWError error 61 - Connection refused)","code":"CONNECT_FAILED","errorMessage":"The operation couldn’t be completed. (Network.NWError error 61 - Connection refused)"}
+⚡️  [error] - {"message":"The operation couldn’t be completed. (Network.NWError error 61 - Connection refused)","code":"CONNECT_FAILED","errorMessage":"The operation couldn’t be completed. (Network.NWError error 61 - Connection refused)"}
+⚡️  To Native ->  TcpSocket read 88006452
+⚡️  To Native ->  TcpSocket read 88006453
+⚡️  To Native ->  TcpSocket disconnect 88006454
+⚡️  TO JS {"client":1}
+ERROR MESSAGE:  {"errorMessage":"Connection closed locally","message":"Connection closed locally","code":"CLOSED"}
+ERROR MESSAGE:  {"code":"CLOSED","message":"Connection closed locally","errorMessage":"Connection closed locally"}
+⚡️  To Native ->  TcpSocket disconnect 88006455
+⚡️  [error] - {"errorMessage":"Connection closed locally","message":"Connection closed locally","code":"CLOSED"}
+⚡️  [error] - {"code":"CLOSED","message":"Connection closed locally","errorMessage":"Connection closed locally"}
+⚡️  TO JS {"client":1}
+⚡️  To Native ->  TcpSocket read 88006456
+ERROR MESSAGE:  {"errorMessage":"Client closed","code":"CLOSED","message":"Client closed"}
+⚡️  [error] - {"errorMessage":"Client closed","code":"CLOSED","message":"Client closed"}
+⚡️  To Native ->  TcpSocket send 88006457
+ERROR MESSAGE:  {"errorMessage":"Client closed","code":"CLOSED","message":"Client closed"}
+⚡️  To Native ->  TcpSocket read 88006458
+⚡️  [error] - {"errorMessage":"Client closed","code":"CLOSED","message":"Client closed"}
+ERROR MESSAGE:  {"code":"EOF","message":"Peer closed its sending side","errorMessage":"Peer closed its sending side"}
+⚡️  [error] - {"code":"EOF","message":"Peer closed its sending side","errorMessage":"Peer closed its sending side"}
+⚡️  To Native ->  TcpSocket closeServer 88006459
+⚡️  TO JS {"server":1}
+⚡️  To Native ->  TcpSocket closeServer 88006460
+⚡️  TO JS {"server":2}
+⚡️  To Native ->  TcpSocket disconnect 88006461
+⚡️  TO JS {"client":1}
+⚡️  To Native ->  TcpSocket disconnect 88006462
+⚡️  TO JS {"client":0}
+⚡️  To Native ->  TcpSocket connect 88006463
+⚡️  TO JS {"client":2}
+⚡️  To Native ->  TcpSocket send 88006464
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 88006465
+⚡️  TO JS {"result":"first echo","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket send 88006466
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 88006467
+⚡️  TO JS {"result":"second echo","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket send 88006468
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 88006469
+⚡️  TO JS {"result":"00017fff","encoding":"hex"}
+⚡️  To Native ->  TcpSocket send 88006470
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 88006471
+⚡️  TO JS {"result":"AAEC\/w==","encoding":"base64"}
+⚡️  To Native ->  TcpSocket send 88006472
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 88006473
+⚡️  TO JS {"result":"buff","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 88006474
+⚡️  TO JS {"result":"ered","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 88006475
+⚡️  TO JS {"result":"-rea","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 88006476
+⚡️  TO JS {"result":"d-re","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 88006477
+⚡️  TO JS {"result":"gres","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 88006478
+⚡️  TO JS {"result":"sion","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 88006479
+ERROR MESSAGE:  {"code":"TIMEOUT","errorMessage":"Operation timed out","message":"Operation timed out"}
+⚡️  [error] - {"code":"TIMEOUT","errorMessage":"Operation timed out","message":"Operation timed out"}
+⚡️  To Native ->  TcpSocket send 88006480
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 88006481
+⚡️  TO JS {"result":"DELAY\n","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket send 88006482
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 88006483
+ERROR MESSAGE:  {"code":"EOF","message":"Peer closed its sending side","errorMessage":"Peer closed its sending side"}
+⚡️  [error] - {"code":"EOF","message":"Peer closed its sending side","errorMessage":"Peer closed its sending side"}
+⚡️  To Native ->  TcpSocket send 88006484
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket disconnect 88006485
+⚡️  TO JS {"client":2}
+⚡️  To Native ->  TcpSocket disconnect 88006486
+⚡️  TO JS {"client":2}

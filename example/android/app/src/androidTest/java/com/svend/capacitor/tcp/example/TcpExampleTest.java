@@ -111,6 +111,9 @@ public class TcpExampleTest {
                         pending.reset();
                         if (text.equals("CLOSE\n")) {
                             socket.shutdownOutput();
+                            java.io.ByteArrayOutputStream afterEOF = new java.io.ByteArrayOutputStream();
+                            while ((count = socket.getInputStream().read(buffer)) != -1) afterEOF.write(buffer, 0, count);
+                            assertEquals("AFTER_EOF\n", afterEOF.toString("UTF-8"));
                             break;
                         }
                         if (text.equals("DELAY\n")) Thread.sleep(3000);
@@ -150,6 +153,71 @@ public class TcpExampleTest {
             } finally {
                 executor.shutdownNow();
             }
+        }
+    }
+
+    @Test
+    public void pluginDestructionSettlesPendingOperations() throws Exception {
+        try {
+            launchExample();
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(120);
+            while (!evaluate("!!window.Capacitor?.Plugins?.TcpSocket").equals("true")) {
+                assertTrue("Plugin not registered", System.nanoTime() < deadline);
+                Thread.sleep(100);
+            }
+            evaluate(
+                "(async () => {" +
+                "const tcp = window.Capacitor.Plugins.TcpSocket;" +
+                "const {server, port} = await tcp.listen({});" +
+                "const accepting = tcp.accept({server});" +
+                "const {client} = await tcp.connect({ipAddress:'127.0.0.1',port});" +
+                "await accepting;" +
+                "const code = p => p.then(() => 'unexpected success', e => e.code);" +
+                "const pending = [code(tcp.read({client,timeout:0})), code(tcp.read({client,timeout:0})), code(tcp.accept({server,timeout:0}))];" +
+                "await tcp.send({client,data:''});" +
+                "window.__destroyReady = true;" +
+                "const results = await Promise.all(pending);" +
+                "results.push(await code(tcp.connect({ipAddress:'127.0.0.1',port})));" +
+                "window.__destroyResult = results.join(',');" +
+                "})().catch(e => {window.__destroyResult = 'failed: '+e.message; window.__destroyReady = true;});"
+            );
+            deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(15);
+            while (!evaluate("!!window.__destroyReady").equals("true")) {
+                assertTrue("Lifecycle setup timed out", System.nanoTime() < deadline);
+                Thread.sleep(100);
+            }
+            AtomicReference<Throwable> failure = new AtomicReference<>();
+            CountDownLatch destroyed = new CountDownLatch(1);
+            main.post(() -> {
+                try {
+                    MainActivity activity = (MainActivity) ActivityLifecycleMonitorRegistry.getInstance()
+                        .getActivitiesInStage(Stage.RESUMED)
+                        .stream()
+                        .filter(a -> a instanceof MainActivity)
+                        .findFirst()
+                        .get();
+                    Object plugin = activity.getBridge().getPlugin("TcpSocket").getInstance();
+                    java.lang.reflect.Method method = plugin.getClass().getDeclaredMethod("handleOnDestroy");
+                    method.setAccessible(true);
+                    method.invoke(plugin);
+                } catch (Throwable error) {
+                    failure.set(error);
+                } finally {
+                    destroyed.countDown();
+                }
+            });
+            assertTrue("Destroy callback stalled", destroyed.await(5, TimeUnit.SECONDS));
+            if (failure.get() != null) throw new AssertionError(failure.get());
+            deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+            String result;
+            do {
+                result = evaluate("window.__destroyResult || ''");
+                assertTrue("Pending operations were not settled", System.nanoTime() < deadline);
+                Thread.sleep(100);
+            } while (result.equals("\"\""));
+            assertEquals("\"CLOSED,CLOSED,CLOSED,CLOSED\"", result);
+        } finally {
+            finishExample();
         }
     }
 }

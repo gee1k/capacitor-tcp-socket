@@ -1,0 +1,45 @@
+swift
+	 Executed 9 tests, with 0 failures (0 unexpected) in 2.525 (2.531) seconds
+	 Executed 9 tests, with 0 failures (0 unexpected) in 2.525 (2.533) seconds
+	 Executed 9 tests, with 0 failures (0 unexpected) in 2.525 (2.534) seconds
+** TEST SUCCEEDED **
+
+pods
+	 Executed 9 tests, with 0 failures (0 unexpected) in 2.424 (2.430) seconds
+	 Executed 9 tests, with 0 failures (0 unexpected) in 2.424 (2.430) seconds
+	 Executed 9 tests, with 0 failures (0 unexpected) in 2.424 (2.431) seconds
+** TEST SUCCEEDED **
+
+android
+Finished 3 tests on Medium_Phone(AVD) - 17
+BUILD SUCCESSFUL in 34s
+
+browser
+  2 passed (1.8s)
+
+packed-spm
+** BUILD SUCCEEDED **
+
+physical-build
+** BUILD SUCCEEDED **
+
+
+> capacitor-tcp-socket@8.0.0 test
+> node --test tests/*.test.cjs
+
+✔ defaults and normalized complete Hex bytes cross the native boundary (2.027375ms)
+✔ invalid runtime input rejects before calling native code (1.592292ms)
+✔ valid empty sends, timeout zero, IPv6 and canonical Base64 remain accepted (0.3315ms)
+✔ native errors retain their stable code and identity (0.22225ms)
+✔ all browser methods reject UNIMPLEMENTED without logging caller data (10.70175ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 313.11025
+
+
+Earlier remote CI run 41308554496 failed: no KVM access; APK install could not find package service; 0 tests executed. KVM configuration added; new result pending.

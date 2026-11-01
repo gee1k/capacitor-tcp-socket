@@ -1,187 +1,84 @@
-/**
- * TCP Socket Plugin interface for Capacitor
- * Provides methods for TCP socket communication
- */
+/** Native TCP byte-stream client and server APIs. Unsupported in browsers. */
 export interface TcpSocketPlugin {
-  /** Bind and listen for incoming TCP connections. Defaults to loopback and an OS-assigned port. */
-  listen(options: ListenOptions): Promise<ListenResult>;
-  /** Accept the next incoming connection. The returned client supports send/read/disconnect. */
+  /** Bind a local listener. Defaults to loopback and an OS-assigned port. */
+  listen(options?: ListenOptions): Promise<ListenResult>;
+  /** Accept one connection. Only one accept may be pending per listener. */
   accept(options: AcceptOptions): Promise<ConnectResult>;
-  /** Stop listening and reject pending accepts. Already accepted clients remain open. */
+  /** Close a listener; accepted clients remain open. Idempotent for issued IDs. */
   closeServer(options: CloseServerOptions): Promise<CloseServerOptions>;
-
-  /**
-   * Connects to a TCP server
-   * @param options Connection options including IP address and port
-   * @returns Promise with the client identifier
-   */
+  /** Connect without blocking other plugin operations. */
   connect(options: ConnectOptions): Promise<ConnectResult>;
-  
-  /**
-   * Sends data to a connected TCP server
-   * @param options Send options including client ID, data and encoding
-   * @returns Promise that resolves when data is sent
-   */
+  /** Send all bytes, in invocation order. Empty data is a successful no-op. */
   send(options: SendOptions): Promise<void>;
-  
-  /**
-   * Reads data from a connected TCP server
-   * @param options Read options including client ID, expected length and timeout
-   * @returns Promise with the data read from the server
-   */
+  /** Read up to expectLen bytes. Reads queue per client; EOF and timeout reject. */
   read(options: ReadOptions): Promise<ReadResult>;
-  
-  /**
-   * Disconnects from a TCP server
-   * @param options Disconnect options with client ID
-   * @returns Promise with the disconnected client ID
-   */
+  /** Close the client and interrupt pending I/O. Idempotent for issued IDs. */
   disconnect(options: DisconnectOptions): Promise<DisconnectResult>;
 }
 
-// Connection Options
-
-/**
- * Options for connecting to a TCP server
- */
-export interface ConnectOptions {
-  /** 
-   * IP address of the server to connect to
-   */
-  ipAddress: string;
-  
-  /**
-   * Port number of the TCP server
-   * @default 9100
-   */
-  port?: number;
-}
-
-/**
- * Result of a successful connection
- */
-export interface ConnectResult {
-  /**
-   * Client ID that can be used for subsequent operations
-   */
-  client: number;
-}
-
-/**
- * Supported encoding types for data
- */
 export enum DataEncoding {
-  /**
-   * UTF-8 text encoding
-   */
   UTF8 = 'utf8',
-  
-  /**
-   * Base64 encoded data
-   */
   BASE64 = 'base64',
-  
-  /**
-   * Hexadecimal string
-   */
-  HEX = 'hex'
+  HEX = 'hex',
 }
 
-/**
- * Options for sending data to a TCP server
- */
-export interface SendOptions {
-  /**
-   * Client ID from a previous connect call
-   */
-  client: number;
-  
-  /**
-   * Data string to send to the server
-   */
-  data: string;
-  
-  /**
-   * Encoding type for the data
-   * @default DataEncoding.UTF8
-   */
-  encoding?: DataEncoding;
+/** Stable error codes; native error message text is diagnostic only. */
+export type TcpSocketErrorCode =
+  | 'INVALID_ARGUMENT'
+  | 'TIMEOUT'
+  | 'EOF'
+  | 'CLOSED'
+  | 'BUSY'
+  | 'CONNECT_FAILED'
+  | 'LISTEN_FAILED'
+  | 'IO_ERROR'
+  | 'UNIMPLEMENTED';
+
+export interface TcpSocketError extends Error {
+  code: TcpSocketErrorCode;
 }
 
-/**
- * Options for reading data from a TCP server
- */
-export interface ReadOptions {
-  /**
-   * Reject with code EOF when the peer closes the connection.
-   * Defaults to false on iOS for compatibility, and true on Android.
-   */
-  rejectOnEOF?: boolean;
-
-  /**
-   * Client ID from a previous connect call
-   */
-  client: number;
-  
-  /**
-   * Expected number of bytes to read
-   */
-  expectLen: number;
-  
-  /**
-   * Read timeout in seconds. On iOS, zero/negative values poll without waiting.
-   * On Android, zero waits indefinitely and negative values are invalid.
-   * @default 10
-   */
+export interface ConnectOptions {
+  /** Server IP address or hostname. */
+  ipAddress: string;
+  /** Server port. @default 9100 */
+  port?: number;
+  /** Whole seconds, including connection establishment; zero waits indefinitely. @default 10 */
   timeout?: number;
-  
-  /**
-   * Preferred encoding for returned data
-   * @default DataEncoding.UTF8
-   */
+}
+export interface ConnectResult {
+  client: number;
+}
+export interface SendOptions {
+  client: number;
+  /** UTF-8 text, canonical standard Base64, or complete Hex bytes. */
+  data: string;
+  /** @default DataEncoding.UTF8 */
   encoding?: DataEncoding;
 }
-
-/**
- * Result of a read operation
- */
+export interface ReadOptions {
+  client: number;
+  /** Maximum bytes to return, not a message size or minimum. @default 1024 */
+  expectLen?: number;
+  /** Whole seconds from the start of this queued read; zero waits indefinitely. @default 10 */
+  timeout?: number;
+  /** Invalid UTF-8 is returned as Base64 with encoding set accordingly. @default DataEncoding.UTF8 */
+  encoding?: DataEncoding;
+}
 export interface ReadResult {
-  /**
-   * Data read from the server
-   * Can be UTF-8 string, Base64 encoded string, or Hex string depending on the encoding option
-   */
-  result?: string;
-  
-  /**
-   * The encoding of the returned result
-   */
-  encoding?: DataEncoding;
+  result: string;
+  encoding: DataEncoding;
 }
-
-/**
- * Options for disconnecting from a TCP server
- */
 export interface DisconnectOptions {
-  /**
-   * Client ID from a previous connect call
-   */
   client: number;
 }
-
-/**
- * Result of a disconnect operation
- */
 export interface DisconnectResult {
-  /**
-   * Client ID that was disconnected
-   */
   client: number;
 }
-
 export interface ListenOptions {
-  /** Local bind address. Use 0.0.0.0 explicitly to allow LAN clients. */
+  /** Local bind address; use 0.0.0.0 explicitly for LAN clients. @default "127.0.0.1" */
   ipAddress?: string;
-  /** Local port; 0 asks the operating system to assign one. */
+  /** Local port; zero asks the OS to assign one. @default 0 */
   port?: number;
 }
 export interface ListenResult {
@@ -190,7 +87,7 @@ export interface ListenResult {
 }
 export interface AcceptOptions {
   server: number;
-  /** Seconds to wait; defaults to 10. Zero waits indefinitely. */
+  /** Whole seconds; zero waits indefinitely. @default 10 */
   timeout?: number;
 }
 export interface CloseServerOptions {

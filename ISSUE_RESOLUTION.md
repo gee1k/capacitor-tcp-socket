@@ -1,5 +1,7 @@
 # Issue 处理与兼容性验收（2026-11-01）
 
+> Historical compatibility-first results below are superseded for the V8 behavior contract by [V8_REVIEW.md](V8_REVIEW.md) and [MIGRATION_V8.md](MIGRATION_V8.md). Historical test outcomes remain recorded as performed.
+
 本记录覆盖 `14851d4` 之后的兼容性修正与服务端功能。第一轮云端和 macOS 验证保留在 MACOS_HANDOFF.md、MACOS_VALIDATION.md；本轮通过不能改写历史失败。
 
 ## 逐项处理

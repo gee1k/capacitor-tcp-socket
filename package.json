@@ -13,7 +13,9 @@
     "ios/Plugin/",
     "ios/PluginTests/",
     "CapacitorTcpSocket.podspec",
-    "Package.swift"
+    "Package.swift",
+    "MIGRATION_V8.md",
+    "CHANGELOG.md"
   ],
   "author": "Svend <svend.jin@gmail.com>",
   "license": "MIT",
@@ -44,7 +46,8 @@
     "clean": "rimraf ./dist",
     "watch": "tsc --watch",
     "prepublishOnly": "npm run build",
-    "test:example": "npm --prefix example run test:browser"
+    "test:example": "npm --prefix example run test:browser",
+    "test": "node --test tests/*.test.cjs"
   },
   "devDependencies": {
     "@capacitor/android": "^8.0.0",

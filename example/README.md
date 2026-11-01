@@ -27,14 +27,22 @@ port 9100. In the native example, enter its reachable IP and port and press
 an iOS simulator can use `127.0.0.1`. For USB Android, `adb reverse tcp:9100
 tcp:9100` also allows the default loopback address.
 
-The action calls the real plugin and checks two consecutive UTF-8 exchanges,
-hex and Base64 binary round trips, repeated short reads of one larger response,
-a timeout followed by delayed data, and peer
-EOF. It disconnects in cleanup. No WebSocket replacement or socket mock is used.
-The test server recognizes `DELAY\n` (3 second delay) and `CLOSE\n` (peer EOF).
+The action runs the same native V8 contract suite on both platforms: invalid
+arguments/encodings, empty sends, timeout/EOF/CLOSED/BUSY codes, UTF-8 fallback,
+FIFO concurrent reads/writes, indefinite read cancellation, 256 KiB binary
+transfer, listener restart, repeated close, and accepted-client survival after
+listener close. It then verifies real host TCP UTF-8/Hex/Base64 exchanges, short
+reads, timeout recovery, peer EOF and sending after peer half-close.
+
+No WebSocket replacement or socket mock is used. The test server recognizes
+DELAY\n (3 second delay), CLOSE\n (peer half-close), and AFTER_EOF\n (verifies
+that receiving EOF did not disable sending). TIMEOUT and EOF are expected rejected
+Promises in V8, not successful empty strings.
 
 An Android instrumentation test launches this same packaged example, starts a
-real loopback TCP server on the emulator/device, and presses the smoke button:
+real loopback TCP server on the emulator/device, and presses the smoke button.
+A separate lifecycle test destroys the actual plugin with read/accept calls
+pending and checks that all settle as CLOSED:
 
 ```sh
 # Build/sync first, then with a connected emulator/device:

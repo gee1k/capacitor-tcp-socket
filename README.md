@@ -1,258 +1,123 @@
 # capacitor-tcp-socket
 
-A TCP Socket Plugin for Capacitor, providing TCP communication capabilities in mobile applications.
-
-Thanks to [@ottimis](https://www.npmjs.com/package/@ottimis/tcp-socket)
+Native TCP byte-stream clients and servers for Capacitor on iOS and Android.
+Thanks to [@ottimis](https://www.npmjs.com/package/@ottimis/tcp-socket).
 
 ## Installation
 
-```bash
-npm install capacitor-tcp-socket
+```sh
+npm install capacitor-tcp-socket@^8
 npx cap sync
 ```
 
-## Platform support
+V8 supports Capacitor 7 and 8, CocoaPods and Swift Package Manager. The example
+uses Capacitor 8 (Node 22+, JDK 21, Android SDK 36, Xcode 26+). SPM requires iOS 15+.
+Host applications must also meet their Capacitor version's platform requirements.
+For a new SPM app: `npx cap add ios --packagemanager SPM`, then `npx cap sync ios`.
+The Swift package product is `CapacitorTcpSocket`. iOS uses Network.framework;
+SwiftSocket and its Swift-version workaround are no longer needed.
 
-The plugin supports Capacitor 7 and 8. The example uses Capacitor 8 (Node 22+,
-JDK 21, Android SDK 36, Xcode 26+). Browser TCP is intentionally unsupported.
+**V8 deliberately unifies platform behavior. Read [the migration guide](MIGRATION_V8.md)
+before upgrading from v7.**
 
-On iOS, TCP uses Apple's Network.framework; there is no SwiftSocket dependency
-or host Podfile Swift-version workaround. CocoaPods and Swift Package Manager
-are supported. For a new Capacitor 8 app, use `npx cap add ios --packagemanager SPM`
-then `npx cap sync ios`. The Swift package product is `CapacitorTcpSocket` and
-requires iOS 15+. Existing CocoaPods apps can continue using `npx cap sync ios`.
+## One contract on both native platforms
 
-For LAN connections, add `NSLocalNetworkUsageDescription` to the app's Info.plist
-and allow local network access on the device. Bonjour service declarations are
-only needed if your app actually browses/advertises those services. A successful
-simulator connection does not establish that a physical device can reach the
-same address: check the device's network, permission and server/firewall logs.
+| Operation or condition | V8 behavior |
+| --- | --- |
+| Read/accept/connect timeout | Rejects with `TIMEOUT`; default 10 whole seconds |
+| Timeout zero | Waits indefinitely; negative/fractional/nonfinite values are invalid |
+| Peer finishes sending | Read rejects `EOF`; sending can continue if the peer still receives |
+| Local disconnect | Pending I/O and later send/read reject `CLOSED` |
+| Empty send | Successful no-op on an open client |
+| Hex | Complete bytes only; whitespace and one leading 0x prefix are accepted |
+| Base64 | Canonical standard padded Base64; malformed data is rejected |
+| Invalid UTF-8 on read | Base64 result with `encoding: 'base64'` |
+| Concurrent operations | FIFO reads and FIFO writes per client; the two directions progress independently |
+| Closing issued handles | disconnect/closeServer are idempotent; unknown handles reject `INVALID_ARGUMENT` |
+| Browser | All TCP methods reject `UNIMPLEMENTED`; payloads are not logged by the plugin |
 
-`read()` performs one read of up to `expectLen` bytes, not a persistent listener
-and not a TCP message boundary. Call it again to receive subsequent data. Timeout
-returns an empty result. Set `rejectOnEOF: true` to reject EOF with code `EOF`;
-by default iOS preserves its legacy empty EOF result and Android rejects EOF. Concurrent reads on the
-same iOS client are queued in invocation order. For legacy compatibility, iOS read
-timeouts of zero or less poll without waiting; Android read timeout zero waits indefinitely.
-iOS native read failures and reads after disconnect preserve the legacy empty result;
-invalid arguments still reject. TCP servers use `listen({ ipAddress, port })`, `accept({ server, timeout })`, and
-`closeServer({ server })`. Listening defaults to loopback and port 0 (OS assigned).
-Use `0.0.0.0` explicitly for LAN access. Accepted client IDs use the same
-`send`/`read`/`disconnect` methods. Closing a server rejects pending accept with
-`CLOSED`, but leaves accepted clients open. Accept timeout rejects with `TIMEOUT`.
-Only one accept may be pending per server. This does not grant background execution
-on mobile platforms; the host app remains responsible for platform lifecycle rules.
+`read` returns **up to** expectLen bytes (default 1024, at most 64 KiB per result),
+not a complete application message. Call it repeatedly and assemble your protocol's
+frames. A successful read contains data; EOF and timeout are errors, never empty
+success results. Queued read timeouts start when that read begins. Use a positive
+timeout for periodic waiting; use disconnect to cancel an indefinite read.
 
-### Cross-platform compatibility
+Network routes, DNS, OS diagnostics, local-network permissions and background
+execution remain platform responsibilities. Equal API behavior does not imply
+identical packet boundaries or OS scheduling. For arbitrary binary data, use Hex
+or Base64. Even valid UTF-8 text may be split inside a multibyte character by TCP;
+assemble bytes and use a streaming decoder if your protocol requires streaming text.
 
-The client APIs share the same shape, but retain these pre-existing platform defaults:
-
-| Behavior | iOS | Android |
-| --- | --- | --- |
-| Default read at EOF | Empty result | Rejects with `EOF` |
-| Read timeout `0` | Nonblocking poll | Waits indefinitely |
-| Empty string send | Allowed | Rejected |
-| Odd-length Hex send | Last digit is accepted as one byte | Rejected |
-| Invalid UTF-8 received as `utf8` | Returns Base64 and `encoding: 'base64'` | Decodes with replacement characters |
-
-For portable client behavior, use positive read timeouts, set `rejectOnEOF` explicitly,
-send nonempty payloads, and use even-length Hex or Base64 for binary data. Check the
-returned encoding and assemble short reads; TCP has no message boundaries. These
-recommendations do not imply identical OS network errors, scheduling or background behavior.
-The new server APIs use the same defaults on both platforms, including an indefinite
-wait for `accept({ timeout: 0 })`.
-
-See [example/README.md](example/README.md) for the real native TCP smoke test and
-browser integration tests.
-
-## Basic Usage
-
-```typescript
-import { TcpSocket } from 'capacitor-tcp-socket';
-
-// Connect to TCP server
-const connect = async () => {
-  try {
-    const result = await TcpSocket.connect({
-      ipAddress: '192.168.1.100',
-      port: 9100
-    });
-    console.log(`Connected with client ID: ${result.client}`);
-    return result.client;
-  } catch (error) {
-    console.error('Connection failed:', error);
-  }
-};
-
-// Send data
-const sendData = async (clientId: number) => {
-  try {
-    await TcpSocket.send({
-      client: clientId,
-      data: 'Hello, TCP Server!'
-    });
-    console.log('Data sent successfully');
-  } catch (error) {
-    console.error('Send failed:', error);
-  }
-};
-
-// Read data
-const readData = async (clientId: number) => {
-  try {
-    const result = await TcpSocket.read({
-      client: clientId,
-      expectLen: 1024,  // Expected maximum bytes to read
-      timeout: 10       // Timeout in seconds
-    });
-    console.log('Received data:', result.result);
-    return result.result;
-  } catch (error) {
-    console.error('Read failed:', error);
-  }
-};
-
-// Disconnect
-const disconnect = async (clientId: number) => {
-  try {
-    const result = await TcpSocket.disconnect({
-      client: clientId
-    });
-    console.log(`Disconnected client: ${result.client}`);
-  } catch (error) {
-    console.error('Disconnect failed:', error);
-  }
-};
-
-// Usage example
-const main = async () => {
-  const clientId = await connect();
-  if (clientId !== undefined) {
-    await sendData(clientId);
-    const data = await readData(clientId);
-    await disconnect(clientId);
-  }
-};
-```
-
-## Working with Different Encodings
-
-This plugin supports multiple data encodings for handling various types of data:
-
-### Using UTF-8 Encoding (Default)
+## Client usage
 
 ```typescript
 import { TcpSocket, DataEncoding } from 'capacitor-tcp-socket';
 
-// Send text data using UTF-8 encoding
-await TcpSocket.send({
-  client: clientId,
-  data: 'Hello, World!',
-  encoding: DataEncoding.UTF8 // Optional, UTF8 is the default
+const { client } = await TcpSocket.connect({
+  ipAddress: '192.168.1.100', port: 9100, timeout: 10,
 });
-
-// Read data as UTF-8 text
-const result = await TcpSocket.read({
-  client: clientId,
-  expectLen: 1024,
-  encoding: DataEncoding.UTF8 // Optional, UTF8 is the default
-});
-
-console.log('Received text:', result.result);
-console.log('Received encoding:', result.encoding);
-```
-
-### Using Base64 Encoding for Binary Data
-
-```typescript
-import { TcpSocket, DataEncoding } from 'capacitor-tcp-socket';
-
-// Send binary data using Base64 encoding
-const binaryData = new Uint8Array([0x48, 0x65, 0x6C, 0x6C, 0x6F]); // "Hello" in ASCII
-const base64Data = btoa(String.fromCharCode.apply(null, binaryData));
-
-await TcpSocket.send({
-  client: clientId,
-  data: base64Data,
-  encoding: DataEncoding.BASE64
-});
-
-// Read binary data as Base64
-const result = await TcpSocket.read({
-  client: clientId,
-  expectLen: 1024,
-  encoding: DataEncoding.BASE64
-});
-
-// Convert Base64 back to binary if needed
-const binaryResult = new Uint8Array(
-  atob(result.result)
-    .split('')
-    .map(c => c.charCodeAt(0))
-);
-```
-
-### Using Hexadecimal Encoding
-
-```typescript
-import { TcpSocket, DataEncoding } from 'capacitor-tcp-socket';
-
-// Send data using hex encoding
-const hexData = "48656C6C6F"; // "Hello" in hex
-
-await TcpSocket.send({
-  client: clientId,
-  data: hexData,
-  encoding: DataEncoding.HEX
-});
-
-// Read data as hex string
-const result = await TcpSocket.read({
-  client: clientId,
-  expectLen: 1024,
-  encoding: DataEncoding.HEX
-});
-
-console.log('Received hex data:', result.result);
-// Example output: "48656C6C6F"
-
-// Convert hex to binary if needed
-function hexToBytes(hex) {
-  const bytes = [];
-  for (let c = 0; c < hex.length; c += 2) {
-    bytes.push(parseInt(hex.substr(c, 2), 16));
-  }
-  return new Uint8Array(bytes);
+try {
+  await TcpSocket.send({ client, data: 'Hello', encoding: DataEncoding.UTF8 });
+  // One chunk, not necessarily a whole response. Frame/assemble as required.
+  const chunk = await TcpSocket.read({ client, expectLen: 4096, timeout: 10,
+    encoding: DataEncoding.BASE64 });
+  const bytes = Uint8Array.from(atob(chunk.result), c => c.charCodeAt(0));
+  // Process bytes according to the application's protocol.
+} finally {
+  await TcpSocket.disconnect({ client });
 }
-
-const binaryFromHex = hexToBytes(result.result);
 ```
 
-## Platform-Specific Considerations
+## Server usage
 
-### Web
-- Not supported on the web platform.
-
-### iOS
-- iOS implementation uses Apple's Network.framework for asynchronous TCP communication.
-- Supports setting a timeout for read operations (via the `timeout` parameter).
-
-### Android
-- Android implementation uses the standard Java Socket API.
-- `read` supports the `timeout` option. If no data arrives in time, `read` returns an empty `result`.
-- If the server closes the connection, `read` fails with error code `EOF`.
-
-## Example Project
-
-Check out the [example](https://github.com/gee1k/capacitor-tcp-socket/tree/master/example) directory to see a complete sample application.
-
-Running the example app:
-
-```bash
-cd example
-npm install
-npm start
+```typescript
+const { server, port } = await TcpSocket.listen({ ipAddress: '127.0.0.1', port: 0 });
+try {
+  const { client } = await TcpSocket.accept({ server, timeout: 10 });
+  try {
+    await TcpSocket.send({ client, data: 'hello from server' });
+  } finally {
+    await TcpSocket.disconnect({ client });
+  }
+} finally {
+  await TcpSocket.closeServer({ server });
+}
 ```
+
+Listening defaults to loopback and an OS-assigned port. Use `0.0.0.0` explicitly
+for LAN clients. Only one accept may be pending per server (`BUSY` otherwise).
+Closing a listener rejects pending accepts with `CLOSED` and preserves accepted
+clients. Pending unaccepted connections are bounded by listener backlog; excess
+connections may be refused by the OS. Plugin destruction closes owned sockets.
+
+For iOS LAN access, add `NSLocalNetworkUsageDescription` to the host Info.plist
+and grant local-network access. Bonjour declarations are only needed for actual
+Bonjour browsing/advertising. A phone's localhost is not the development Mac.
+Android's INTERNET permission is included by manifest merging.
+
+## Errors
+
+Use `error.code`, not OS-dependent message text:
+
+| Code | Meaning |
+| --- | --- |
+| INVALID_ARGUMENT | Invalid options, encoding, data representation or unknown handle |
+| TIMEOUT | Connect, read or accept deadline elapsed |
+| EOF | Peer ended its sending direction |
+| CLOSED | Client/listener/plugin was closed locally |
+| BUSY | An accept is already pending on this listener |
+| CONNECT_FAILED | Connection establishment failed |
+| LISTEN_FAILED | Binding/listening failed |
+| IO_ERROR | Other established-connection or accept failure |
+| UNIMPLEMENTED | Raw TCP is unavailable in browsers |
+
+## Example and verification
+
+See [example/README.md](example/README.md) for real device/simulator TCP tests.
+`npm test` checks the shared runtime input contract; `npm run build` builds the
+package and API docs. Native tests exercise real sockets, concurrency, cancellation,
+encoding, lifecycle cleanup and half-close behavior. Browser tests verify the
+unsupported boundary; they are not substitutes for native tests.
 
 ## API
 
@@ -273,16 +138,15 @@ npm start
 <docgen-api>
 <!--Update the source file JSDoc comments and rerun docgen to update the docs below-->
 
-TCP Socket Plugin interface for Capacitor
-Provides methods for TCP socket communication
+Native TCP byte-stream client and server APIs. Unsupported in browsers.
 
 ### listen(...)
 
 ```typescript
-listen(options: ListenOptions) => Promise<ListenResult>
+listen(options?: ListenOptions | undefined) => Promise<ListenResult>
 ```
 
-Bind and listen for incoming TCP connections. Defaults to loopback and an OS-assigned port.
+Bind a local listener. Defaults to loopback and an OS-assigned port.
 
 | Param         | Type                                                    |
 | ------------- | ------------------------------------------------------- |
@@ -299,7 +163,7 @@ Bind and listen for incoming TCP connections. Defaults to loopback and an OS-ass
 accept(options: AcceptOptions) => Promise<ConnectResult>
 ```
 
-Accept the next incoming connection. The returned client supports send/read/disconnect.
+Accept one connection. Only one accept may be pending per listener.
 
 | Param         | Type                                                    |
 | ------------- | ------------------------------------------------------- |
@@ -316,7 +180,7 @@ Accept the next incoming connection. The returned client supports send/read/disc
 closeServer(options: CloseServerOptions) => Promise<CloseServerOptions>
 ```
 
-Stop listening and reject pending accepts. Already accepted clients remain open.
+Close a listener; accepted clients remain open. Idempotent for issued IDs.
 
 | Param         | Type                                                              |
 | ------------- | ----------------------------------------------------------------- |
@@ -333,11 +197,11 @@ Stop listening and reject pending accepts. Already accepted clients remain open.
 connect(options: ConnectOptions) => Promise<ConnectResult>
 ```
 
-Connects to a TCP server
+Connect without blocking other plugin operations.
 
-| Param         | Type                                                      | Description                                      |
-| ------------- | --------------------------------------------------------- | ------------------------------------------------ |
-| **`options`** | <code><a href="#connectoptions">ConnectOptions</a></code> | Connection options including IP address and port |
+| Param         | Type                                                      |
+| ------------- | --------------------------------------------------------- |
+| **`options`** | <code><a href="#connectoptions">ConnectOptions</a></code> |
 
 **Returns:** <code>Promise&lt;<a href="#connectresult">ConnectResult</a>&gt;</code>
 
@@ -350,11 +214,11 @@ Connects to a TCP server
 send(options: SendOptions) => Promise<void>
 ```
 
-Sends data to a connected TCP server
+Send all bytes, in invocation order. Empty data is a successful no-op.
 
-| Param         | Type                                                | Description                                         |
-| ------------- | --------------------------------------------------- | --------------------------------------------------- |
-| **`options`** | <code><a href="#sendoptions">SendOptions</a></code> | Send options including client ID, data and encoding |
+| Param         | Type                                                |
+| ------------- | --------------------------------------------------- |
+| **`options`** | <code><a href="#sendoptions">SendOptions</a></code> |
 
 --------------------
 
@@ -365,11 +229,11 @@ Sends data to a connected TCP server
 read(options: ReadOptions) => Promise<ReadResult>
 ```
 
-Reads data from a connected TCP server
+Read up to expectLen bytes. Reads queue per client; EOF and timeout reject.
 
-| Param         | Type                                                | Description                                                   |
-| ------------- | --------------------------------------------------- | ------------------------------------------------------------- |
-| **`options`** | <code><a href="#readoptions">ReadOptions</a></code> | Read options including client ID, expected length and timeout |
+| Param         | Type                                                |
+| ------------- | --------------------------------------------------- |
+| **`options`** | <code><a href="#readoptions">ReadOptions</a></code> |
 
 **Returns:** <code>Promise&lt;<a href="#readresult">ReadResult</a>&gt;</code>
 
@@ -382,11 +246,11 @@ Reads data from a connected TCP server
 disconnect(options: DisconnectOptions) => Promise<DisconnectResult>
 ```
 
-Disconnects from a TCP server
+Close the client and interrupt pending I/O. Idempotent for issued IDs.
 
-| Param         | Type                                                            | Description                       |
-| ------------- | --------------------------------------------------------------- | --------------------------------- |
-| **`options`** | <code><a href="#disconnectoptions">DisconnectOptions</a></code> | Disconnect options with client ID |
+| Param         | Type                                                            |
+| ------------- | --------------------------------------------------------------- |
+| **`options`** | <code><a href="#disconnectoptions">DisconnectOptions</a></code> |
 
 **Returns:** <code>Promise&lt;<a href="#disconnectresult">DisconnectResult</a>&gt;</code>
 
@@ -406,27 +270,25 @@ Disconnects from a TCP server
 
 #### ListenOptions
 
-| Prop            | Type                | Description                                                      |
-| --------------- | ------------------- | ---------------------------------------------------------------- |
-| **`ipAddress`** | <code>string</code> | Local bind address. Use 0.0.0.0 explicitly to allow LAN clients. |
-| **`port`**      | <code>number</code> | Local port; 0 asks the operating system to assign one.           |
+| Prop            | Type                | Description                                                                      |
+| --------------- | ------------------- | -------------------------------------------------------------------------------- |
+| **`ipAddress`** | <code>string</code> | Local bind address; use 0.0.0.0 explicitly for LAN clients. @default "127.0.0.1" |
+| **`port`**      | <code>number</code> | Local port; zero asks the OS to assign one. @default 0                           |
 
 
 #### ConnectResult
 
-Result of a successful connection
-
-| Prop         | Type                | Description                                          |
-| ------------ | ------------------- | ---------------------------------------------------- |
-| **`client`** | <code>number</code> | Client ID that can be used for subsequent operations |
+| Prop         | Type                |
+| ------------ | ------------------- |
+| **`client`** | <code>number</code> |
 
 
 #### AcceptOptions
 
-| Prop          | Type                | Description                                               |
-| ------------- | ------------------- | --------------------------------------------------------- |
-| **`server`**  | <code>number</code> |                                                           |
-| **`timeout`** | <code>number</code> | Seconds to wait; defaults to 10. Zero waits indefinitely. |
+| Prop          | Type                | Description                                         |
+| ------------- | ------------------- | --------------------------------------------------- |
+| **`server`**  | <code>number</code> |                                                     |
+| **`timeout`** | <code>number</code> | Whole seconds; zero waits indefinitely. @default 10 |
 
 
 #### CloseServerOptions
@@ -438,64 +300,52 @@ Result of a successful connection
 
 #### ConnectOptions
 
-Options for connecting to a TCP server
-
-| Prop            | Type                | Description                            | Default           |
-| --------------- | ------------------- | -------------------------------------- | ----------------- |
-| **`ipAddress`** | <code>string</code> | IP address of the server to connect to |                   |
-| **`port`**      | <code>number</code> | Port number of the TCP server          | <code>9100</code> |
+| Prop            | Type                | Description                                                                             |
+| --------------- | ------------------- | --------------------------------------------------------------------------------------- |
+| **`ipAddress`** | <code>string</code> | Server IP address or hostname.                                                          |
+| **`port`**      | <code>number</code> | Server port. @default 9100                                                              |
+| **`timeout`**   | <code>number</code> | Whole seconds, including connection establishment; zero waits indefinitely. @default 10 |
 
 
 #### SendOptions
 
-Options for sending data to a TCP server
-
-| Prop           | Type                                                  | Description                            | Default                        |
-| -------------- | ----------------------------------------------------- | -------------------------------------- | ------------------------------ |
-| **`client`**   | <code>number</code>                                   | Client ID from a previous connect call |                                |
-| **`data`**     | <code>string</code>                                   | Data string to send to the server      |                                |
-| **`encoding`** | <code><a href="#dataencoding">DataEncoding</a></code> | Encoding type for the data             | <code>DataEncoding.UTF8</code> |
+| Prop           | Type                                                  | Description                                                   | Default                        |
+| -------------- | ----------------------------------------------------- | ------------------------------------------------------------- | ------------------------------ |
+| **`client`**   | <code>number</code>                                   |                                                               |                                |
+| **`data`**     | <code>string</code>                                   | UTF-8 text, canonical standard Base64, or complete Hex bytes. |                                |
+| **`encoding`** | <code><a href="#dataencoding">DataEncoding</a></code> |                                                               | <code>DataEncoding.UTF8</code> |
 
 
 #### ReadResult
 
-Result of a read operation
-
-| Prop           | Type                                                  | Description                                                                                                          |
-| -------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| **`result`**   | <code>string</code>                                   | Data read from the server Can be UTF-8 string, Base64 encoded string, or Hex string depending on the encoding option |
-| **`encoding`** | <code><a href="#dataencoding">DataEncoding</a></code> | The encoding of the returned result                                                                                  |
+| Prop           | Type                                                  |
+| -------------- | ----------------------------------------------------- |
+| **`result`**   | <code>string</code>                                   |
+| **`encoding`** | <code><a href="#dataencoding">DataEncoding</a></code> |
 
 
 #### ReadOptions
 
-Options for reading data from a TCP server
-
-| Prop              | Type                                                  | Description                                                                                                                                      | Default                        |
-| ----------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------ |
-| **`rejectOnEOF`** | <code>boolean</code>                                  | Reject with code EOF when the peer closes the connection. Defaults to false on iOS for compatibility, and true on Android.                       |                                |
-| **`client`**      | <code>number</code>                                   | Client ID from a previous connect call                                                                                                           |                                |
-| **`expectLen`**   | <code>number</code>                                   | Expected number of bytes to read                                                                                                                 |                                |
-| **`timeout`**     | <code>number</code>                                   | Read timeout in seconds. On iOS, zero/negative values poll without waiting. On Android, zero waits indefinitely and negative values are invalid. | <code>10</code>                |
-| **`encoding`**    | <code><a href="#dataencoding">DataEncoding</a></code> | Preferred encoding for returned data                                                                                                             | <code>DataEncoding.UTF8</code> |
+| Prop            | Type                                                  | Description                                                                                                               |
+| --------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **`client`**    | <code>number</code>                                   |                                                                                                                           |
+| **`expectLen`** | <code>number</code>                                   | Maximum bytes to return, not a message size or minimum. @default 1024                                                     |
+| **`timeout`**   | <code>number</code>                                   | Whole seconds from the start of this queued read; zero waits indefinitely. @default 10                                    |
+| **`encoding`**  | <code><a href="#dataencoding">DataEncoding</a></code> | Invalid UTF-8 is returned as Base64 with encoding set accordingly. @default <a href="#dataencoding">DataEncoding.UTF8</a> |
 
 
 #### DisconnectResult
 
-Result of a disconnect operation
-
-| Prop         | Type                | Description                     |
-| ------------ | ------------------- | ------------------------------- |
-| **`client`** | <code>number</code> | Client ID that was disconnected |
+| Prop         | Type                |
+| ------------ | ------------------- |
+| **`client`** | <code>number</code> |
 
 
 #### DisconnectOptions
 
-Options for disconnecting from a TCP server
-
-| Prop         | Type                | Description                            |
-| ------------ | ------------------- | -------------------------------------- |
-| **`client`** | <code>number</code> | Client ID from a previous connect call |
+| Prop         | Type                |
+| ------------ | ------------------- |
+| **`client`** | <code>number</code> |
 
 
 ### Enums
@@ -503,10 +353,10 @@ Options for disconnecting from a TCP server
 
 #### DataEncoding
 
-| Members      | Value                 | Description         |
-| ------------ | --------------------- | ------------------- |
-| **`UTF8`**   | <code>'utf8'</code>   | UTF-8 text encoding |
-| **`BASE64`** | <code>'base64'</code> | Base64 encoded data |
-| **`HEX`**    | <code>'hex'</code>    | Hexadecimal string  |
+| Members      | Value                 |
+| ------------ | --------------------- |
+| **`UTF8`**   | <code>'utf8'</code>   |
+| **`BASE64`** | <code>'base64'</code> |
+| **`HEX`**    | <code>'hex'</code>    |
 
 </docgen-api>

@@ -1,5 +1,7 @@
 # macOS iOS 原生验证记录
 
+> Historical compatibility-first results below are superseded for the V8 behavior contract by [V8_REVIEW.md](V8_REVIEW.md) and [MIGRATION_V8.md](MIGRATION_V8.md). Historical test outcomes remain recorded as performed.
+
 本文件记录第一轮、提交 `14851d4` 的验证快照。后续兼容性修正、服务端能力和 Android 本机验收见 [ISSUE_RESOLUTION.md](ISSUE_RESOLUTION.md)。
 
 ## 结论与范围
