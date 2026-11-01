@@ -1,6 +1,6 @@
 # macOS 本地接续说明
 
-最新全量处理结果见 [ISSUE_RESOLUTION.md](ISSUE_RESOLUTION.md)。下面保留第一轮交接与验证背景。
+最新全量处理结果见 [ISSUE_RESOLUTION.md](ISSUE_RESOLUTION.md)。已追加 iPhone 16 Pro 真机验收与 example Scene 启动修复，见 MACOS_VALIDATION.md 末尾。下面保留第一轮交接与验证背景，其中待办状态不是最新状态。
 
 ## 当前目标与状态
 

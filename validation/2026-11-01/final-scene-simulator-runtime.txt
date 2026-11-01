@@ -1,0 +1,89 @@
+iPhone 17 Pro simulator / iOS 26.5; Scene lifecycle regression; 2026-11-01
+GUI verified: Smoke test passed (20:43:03).
+TIMEOUT, CLOSED and EOF below are expected assertions.
+
+  To Native ->  TcpSocket listen 124439306
+⚡️  TO JS {"port":50113,"server":0}
+⚡️  To Native ->  TcpSocket accept 124439307
+ERROR MESSAGE:  {"message":"Accept timed out","errorMessage":"Accept timed out","code":"TIMEOUT"}
+⚡️  [error] - {"message":"Accept timed out","errorMessage":"Accept timed out","code":"TIMEOUT"}
+⚡️  To Native ->  TcpSocket accept 124439308
+⚡️  To Native ->  TcpSocket connect 124439309
+⚡️  TO JS {"client":0}
+⚡️  TO JS {"client":1}
+⚡️  To Native ->  TcpSocket send 124439310
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 124439311
+⚡️  TO JS {"result":"0001","encoding":"hex"}
+⚡️  To Native ->  TcpSocket read 124439312
+⚡️  TO JS {"result":"7fff","encoding":"hex"}
+⚡️  To Native ->  TcpSocket send 124439313
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 124439314
+⚡️  TO JS {"result":"e4b8","encoding":"hex"}
+⚡️  To Native ->  TcpSocket read 124439315
+⚡️  TO JS {"result":"ade6","encoding":"hex"}
+⚡️  To Native ->  TcpSocket read 124439316
+⚡️  TO JS {"result":"9687","encoding":"hex"}
+⚡️  To Native ->  TcpSocket accept 124439317
+⚡️  To Native ->  TcpSocket closeServer 124439318
+ERROR MESSAGE:  {"message":"Server closed","code":"CLOSED","errorMessage":"Server closed"}
+⚡️  TO JS {"server":0}
+⚡️  [error] - {"message":"Server closed","code":"CLOSED","errorMessage":"Server closed"}
+⚡️  To Native ->  TcpSocket send 124439319
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 124439320
+⚡️  TO JS {"result":"41","encoding":"hex"}
+⚡️  To Native ->  TcpSocket disconnect 124439321
+⚡️  TO JS {"client":1}
+⚡️  To Native ->  TcpSocket disconnect 124439322
+⚡️  TO JS {"client":0}
+⚡️  To Native ->  TcpSocket connect 124439323
+⚡️  TO JS {"client":2}
+⚡️  To Native ->  TcpSocket send 124439324
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 124439325
+⚡️  TO JS {"result":"first echo","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket send 124439326
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 124439327
+⚡️  TO JS {"result":"second echo","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket send 124439328
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 124439329
+⚡️  TO JS {"result":"00017fff","encoding":"hex"}
+⚡️  To Native ->  TcpSocket send 124439330
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 124439331
+⚡️  TO JS {"result":"AAEC\/w==","encoding":"base64"}
+⚡️  To Native ->  TcpSocket send 124439332
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 124439333
+⚡️  TO JS {"result":"buff","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 124439334
+⚡️  TO JS {"result":"ered","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 124439335
+⚡️  TO JS {"result":"-rea","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 124439336
+⚡️  TO JS {"result":"d-re","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 124439337
+⚡️  TO JS {"result":"gres","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 124439338
+⚡️  TO JS {"result":"sion","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 124439339
+⚡️  TO JS {"result":"","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket send 124439340
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 124439341
+⚡️  TO JS {"result":"DELAY\n","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket send 124439342
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 124439343
+⚡️  TO JS {"result":"","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 124439344
+ERROR MESSAGE:  {"message":"Read failed: Connection closed","code":"EOF","errorMessage":"Read failed: Connection closed"}
+⚡️  [error] - {"message":"Read failed: Connection closed","code":"EOF","errorMessage":"Read failed: Connection closed"}
+⚡️  To Native ->  TcpSocket disconnect 124439345
+⚡️  TO JS {"client":2}
+⚡️  To Native ->  TcpSocket disconnect 124439346
+⚡️  TO JS {"client":2}

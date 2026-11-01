@@ -135,3 +135,24 @@ Capacitor / Camera 也有捕获相关警告。另有 AppIntents 元数据跳过�
 XCTest 动态库最低版本、模拟器 Network / WebKit 辅助功能日志。本次保留原状，未为消除警告扩大修改范围。
 `npm ci` 审计报告根项目 15 项（6 moderate、9 high）、example 9 项（1 moderate、8 high）；
 本次未进行依赖安全升级。
+
+## 真机补充验证（2026-11-01 20:41）
+
+设备为 iPhone 16 Pro / iOS 27.0.1，使用 Xcode 27 和既有开发签名构建、安装 CocoaPods example。
+首次启动实际失败：EXC_BREAKPOINT / SIGTRAP，栈顶包含
+`___UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption_block_invoke`。
+按照 Capacitor 8 模板增加 SceneDelegate 和 UIApplicationSceneManifest 后重新构建成功，正常进入 WebView。
+这符合 [Apple 的 Scene 生命周期迁移说明](https://developer.apple.com/documentation/uikit/transitioning-to-the-uikit-scene-based-life-cycle)，但不能据此认定是 2025 年 #4 报告的根因。
+
+在真机页面填写 Mac 的局域网地址（不是手机的 127.0.0.1），端口 9100，允许无线局域网和本地网络访问后点击 Run TCP smoke test。
+20:41:19 页面显示完整 `Smoke test passed`，原生桥接日志确认以下场景：
+
+- 手机本地 TCP listener / accept、accept 超时、双向二进制、关闭监听拒绝等待，以及已建立连接继续收发。
+- iPhone 经局域网连接 Mac Node TCP server，两次 UTF-8、Hex、Base64 回显。
+- 连续短读重组数据、超时后延迟回显、默认 iOS EOF 空串兼容、显式 EOF 拒绝和重复 disconnect。
+
+此轮没有修改 TCP 插件，只修复 example 启动配置。当前实现未复现 #4 的真机连接阻塞；原报告缺少版本、错误和复现工程，其确切原因仍未知。
+不把本次通过改写成此前云端验证通过，也不代表所有 iOS 版本或第三方宿主均已验证。
+真机桥接日志（仅测试数据）保存在 `validation/2026-11-01/final-physical-runtime.txt`；未提交包含设备标识的崩溃原文件。
+
+Scene 修改后另在 iPhone 17 Pro / iOS 26.5 模拟器重新构建、安装、启动，20:43:03 完整 TCP smoke test 再次通过；日志见 `final-scene-simulator-runtime.txt`。Info.plist 格式检查和 git diff --check 均通过。

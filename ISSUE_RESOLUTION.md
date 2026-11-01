@@ -11,13 +11,13 @@
 | #1 | Android/iOS 实际 example 连续两次收发、连续短读、超时后数据均通过。历史 Android 缓冲输入流修正来自已合并 #7；本轮补齐回归，并修正 iOS 读取队列和超时后的数据保留。原报告缺少平台/版本/复现代码，不能声称识别了其唯一根因。 |
 | #2 | 历史已关闭；本轮额外用实际 npm 包接入 Capacitor 7.6.10，iOS 编译和完整 TCP smoke test 通过。 |
 | #3 | 移除 SwiftSocket，使用 Network.framework；CocoaPods/SPM 构建和实际运行通过。 |
-| #4 | 已在 GitHub 更新调查结果并向报告者索取真机版本、错误、权限及服务端连接记录；保留 open。没有真机证据，不能宣称已解决。 |
+| #4 | iPhone 16 Pro / iOS 27.0.1 真机已通过完整 TCP smoke test，包括经局域网连接 Mac。修复本次发现的 example Scene 生命周期启动崩溃。当前实现未复现原报告的连接阻塞；原报告根因未知，按当前版本验证结果结案，提供复现后可重开。 |
 | #5 | 新增 iOS/Android `listen`、`accept`、`closeServer`。监听默认 loopback，显式设置 0.0.0.0 才接收 LAN 连接；已接受的连接复用原有客户端 API。两平台实际 smoke test 验证超时、双向二进制、关闭监听拒绝等待、已连接客户端继续可用。 |
 | #6 | 历史关闭、未合并的内部包仓库 PR，不是待修复缺陷。 |
 | #7 | 历史已合并的 Android timeout/EOF PR；本轮真实 Android 测试覆盖相关行为。 |
 | #8 | Capacitor 8、SPM npm 包接入、CocoaPods 接入均通过；本机 Android 原生测试通过。 |
 
-#4 是唯一尚缺复现证据的真实问题。不能将“全部已处理”表述为“全部问题已证实修复”。GitHub 的最终状态及提交号以本次操作结果为准。
+全部条目已完成技术处理或历史状态核对。#1/#4 原报告信息不足，不能将结案表述为已确认其唯一根因。GitHub 的最终状态及提交号以本次操作结果为准。
 
 ## 原有能力和行为兼容
 
@@ -46,7 +46,7 @@
 - Capacitor 7 工程默认 iOS 14；Xcode 27 拒绝低于 iOS 15 的部署目标。只给测试构建传入 `IPHONEOS_DEPLOYMENT_TARGET=15.0` 后成功；没有因此修改插件 CocoaPods 的 iOS 14 声明。本轮未验证真实 iOS 14 设备。
 - 浏览器测试最初缺少对应 Chromium，安装 Playwright 官方 headless shell 后通过。沙箱监听限制通过工具权限解决。
 - 云端 Android WebView 超时仍是历史失败；本机通过不能证明云端失败的确切原因。
-- 未进行 iOS 真机验收、应用商店归档或 npm 发布；没有“所有设备绝对无 bug”的证据。
+- 已追加 iOS 真机验收，见 MACOS_VALIDATION.md 末尾；未进行应用商店归档或 npm 发布，没有“所有设备绝对无 bug”的证据。
 
 ## 证据
 
