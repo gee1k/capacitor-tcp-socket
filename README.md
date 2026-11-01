@@ -43,6 +43,25 @@ Use `0.0.0.0` explicitly for LAN access. Accepted client IDs use the same
 Only one accept may be pending per server. This does not grant background execution
 on mobile platforms; the host app remains responsible for platform lifecycle rules.
 
+### Cross-platform compatibility
+
+The client APIs share the same shape, but retain these pre-existing platform defaults:
+
+| Behavior | iOS | Android |
+| --- | --- | --- |
+| Default read at EOF | Empty result | Rejects with `EOF` |
+| Read timeout `0` | Nonblocking poll | Waits indefinitely |
+| Empty string send | Allowed | Rejected |
+| Odd-length Hex send | Last digit is accepted as one byte | Rejected |
+| Invalid UTF-8 received as `utf8` | Returns Base64 and `encoding: 'base64'` | Decodes with replacement characters |
+
+For portable client behavior, use positive read timeouts, set `rejectOnEOF` explicitly,
+send nonempty payloads, and use even-length Hex or Base64 for binary data. Check the
+returned encoding and assemble short reads; TCP has no message boundaries. These
+recommendations do not imply identical OS network errors, scheduling or background behavior.
+The new server APIs use the same defaults on both platforms, including an indefinite
+wait for `accept({ timeout: 0 })`.
+
 See [example/README.md](example/README.md) for the real native TCP smoke test and
 browser integration tests.
 
