@@ -1,197 +1,115 @@
 import Foundation
 import Capacitor
-import SwiftSocket
 
-/**
- * TcpSocketPlugin - Capacitor plugin that provides TCP Socket communication functionality
- * Supports connection, data sending, data receiving and disconnection operations
- */
 @objc(TcpSocketPlugin)
-public class TcpSocketPlugin: CAPPlugin {
-    /// Stores all connected TCP clients
-    private var clients: [TCPClient] = []
-    
-    // Data encoding types
-    private enum DataEncoding: String {
-        case utf8 = "utf8"
-        case base64 = "base64"
-        case hex = "hex"
-    }
-    
-    /**
-     * Connect to TCP server
-     * Parameters:
-     * - ipAddress: Server IP address (required)
-     * - port: Server port, default 9100
-     * Returns:
-     * - client: Client index, used for subsequent operations
-     */
-    @objc func connect(_ call: CAPPluginCall) {
-        guard let ip = call.getString("ipAddress") else {
-            call.reject("IP address is required")
-            return
-        }
-        let port = Int32(call.getInt("port", 9100))
+public class TcpSocketPlugin: CAPPlugin, CAPBridgedPlugin {
+    public let identifier = "TcpSocketPlugin"
+    public let jsName = "TcpSocket"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "connect", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "send", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "read", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "disconnect", returnType: CAPPluginReturnPromise)
+    ]
+    private let queue = DispatchQueue(label: "TcpSocket.clients")
+    private var clients: [Int: TcpConnection] = [:]
+    private var nextClient = 0
 
-        let client = TCPClient(address: ip, port: port)
-        switch client.connect(timeout: 10) {
-        case .success:
-            clients.append(client)
-            call.resolve(["client": clients.count - 1])
-        case .failure(let error):
-            call.reject("Connection failed: \(error.localizedDescription)")
+    @objc func connect(_ call: CAPPluginCall) {
+        guard let host = call.getString("ipAddress"), !host.isEmpty else {
+            call.reject("IP address is required"); return
+        }
+        let port = call.getInt("port", 9100)
+        guard (1...65535).contains(port) else { call.reject("Invalid port"); return }
+        let connection = TcpConnection(host: host, port: UInt16(port))
+        connection.connect { error in
+            if let error = error { call.reject("Connection failed: \(error.localizedDescription)"); return }
+            self.queue.async {
+                let id = self.nextClient
+                self.nextClient += 1
+                self.clients[id] = connection
+                call.resolve(["client": id])
+            }
         }
     }
-    
-    /**
-     * Send data to server with specified encoding
-     * Parameters:
-     * - client: Client index
-     * - data: Data to send
-     * - encoding: Data encoding (utf8, base64, hex), default is utf8
-     */
+
+    private func withClient(_ call: CAPPluginCall, action: @escaping (TcpConnection) -> Void) {
+        queue.async {
+            guard let id = call.getInt("client"), let client = self.clients[id] else {
+                call.reject("Client not specified or disconnected"); return
+            }
+            action(client)
+        }
+    }
+
     @objc func send(_ call: CAPPluginCall) {
-        guard let clientIndex = call.getInt("client"), clientIndex >= 0 else {
-            call.reject("Client not specified or invalid index")
-            return
-        }
-        
-        guard clients.indices.contains(clientIndex) else {
-            call.reject("Client index out of range")
-            return
-        }
-        
-        let client = clients[clientIndex]
-        guard let data = call.getString("data") else {
-            call.reject("No data provided")
-            return
-        }
-        
-        let encodingString = call.getString("encoding", "utf8")
-        guard let encoding = DataEncoding(rawValue: encodingString) else {
-            call.reject("Unsupported encoding: \(encodingString)")
-            return
-        }
-        
-        var byteData: [UInt8]?
-        
-        // Convert the string to bytes based on the specified encoding
+        guard let text = call.getString("data"), !text.isEmpty else { call.reject("No data provided"); return }
+        let encoding = call.getString("encoding", "utf8")
+        let data: Data?
         switch encoding {
-        case .utf8:
-            byteData = [UInt8](data.utf8)
-        case .base64:
-            if let decodedData = Data(base64Encoded: data) {
-                byteData = [UInt8](decodedData)
+        case "utf8": data = text.data(using: .utf8)
+        case "base64": data = Data(base64Encoded: text)
+        case "hex": data = Self.hexStringToBytes(text).map { Data($0) }
+        default: call.reject("Unsupported encoding: \(encoding)"); return
+        }
+        guard let bytes = data else { call.reject("Failed to decode data"); return }
+        withClient(call) { client in
+            client.send(bytes) { error in
+                if let error = error { call.reject("Send failed: \(error.localizedDescription)") }
+                else { call.resolve() }
             }
-        case .hex:
-            byteData = hexStringToBytes(data)
-        }
-        
-        guard let bytes = byteData else {
-            call.reject("Failed to decode data with encoding: \(encodingString)")
-            return
-        }
-        
-        switch client.send(data: bytes) {
-        case .success:
-            call.resolve()
-        case .failure(let error):
-            call.reject("Send failed: \(error.localizedDescription)")
         }
     }
-    
-    /**
-     * Read data from server
-     * Parameters:
-     * - client: Client index
-     * - expectLen: Expected number of bytes to read, default 1024
-     * - timeout: Timeout in seconds, default 10 seconds
-     * - encoding: Preferred encoding for returned data (utf8, base64, hex), default is utf8
-     * Returns:
-     * - result: Data read
-     * - encoding: The encoding used for the result
-     */
+
     @objc func read(_ call: CAPPluginCall) {
-        guard let clientIndex = call.getInt("client"), clientIndex >= 0 else {
-            call.reject("Client not specified or invalid index")
-            return
-        }
-        
-        guard clients.indices.contains(clientIndex) else {
-            call.reject("Client index out of range")
-            return
-        }
-        
-        let client = clients[clientIndex]
-        let expectLen = call.getInt("expectLen", 1024)
+        let length = call.getInt("expectLen", 1024)
         let timeout = call.getInt("timeout", 10)
-        let encodingString = call.getString("encoding", "utf8")
-        
-        guard let encoding = DataEncoding(rawValue: encodingString) else {
-            call.reject("Unsupported encoding: \(encodingString)")
-            return
+        let encoding = call.getString("encoding", "utf8")
+        guard length > 0, timeout >= 0 else { call.reject("Invalid read length or timeout"); return }
+        guard ["utf8", "base64", "hex"].contains(encoding) else {
+            call.reject("Unsupported encoding: \(encoding)"); return
         }
-        
-        guard let response = client.read(expectLen, timeout: timeout) else {
-            call.resolve(["result": "", "encoding": encoding.rawValue])
-            return
-        }
-        
-        let result: String
-        
-        switch encoding {
-        case .utf8:
-            // Try to convert to UTF-8 string, fall back to base64 if not possible
-            if let utf8String = String(bytes: response, encoding: .utf8) {
-                result = utf8String
-            } else {
-                // Fall back to base64 if UTF-8 conversion fails
-                result = Data(response).base64EncodedString()
-                call.resolve(["result": result, "encoding": DataEncoding.base64.rawValue])
-                return
+        withClient(call) { client in
+            client.read(length: length, timeout: timeout) { result in
+                switch result {
+                case .failure(let error):
+                    let code = (error as? TcpConnection.SocketError) == .closed ? "EOF" : nil
+                    call.reject("Read failed: \(error.localizedDescription)", code)
+                case .success(let data):
+                    var actualEncoding = encoding
+                    let text: String
+                    switch encoding {
+                    case "hex": text = Self.bytesToHexString(Array(data))
+                    case "base64": text = data.base64EncodedString()
+                    default:
+                        if let decoded = String(data: data, encoding: .utf8) { text = decoded }
+                        else { text = data.base64EncodedString(); actualEncoding = "base64" }
+                    }
+                    call.resolve(["result": text, "encoding": actualEncoding])
+                }
             }
-        case .base64:
-            result = Data(response).base64EncodedString()
-        case .hex:
-            result = bytesToHexString(response)
         }
-        
-        call.resolve(["result": result, "encoding": encoding.rawValue])
     }
-    
-    /**
-     * Disconnect from server
-     * Parameters:
-     * - client: Client index
-     * Returns:
-     * - client: Disconnected client index
-     */
+
     @objc func disconnect(_ call: CAPPluginCall) {
-        guard let clientIndex = call.getInt("client"), clientIndex >= 0 else {
-            call.reject("Client not specified or invalid index")
-            return
+        queue.async {
+            guard let id = call.getInt("client"), let client = self.clients.removeValue(forKey: id) else {
+                call.reject("Client not specified or disconnected"); return
+            }
+            client.close()
+            call.resolve(["client": id])
         }
-        
-        guard clients.indices.contains(clientIndex) else {
-            call.reject("Client index out of range")
-            return
-        }
-        
-        clients[clientIndex].close()
-        call.resolve(["client": clientIndex])
     }
-    
-    /**
-     * Convert hex string to bytes
-     * - Parameter hex: Hex string (can have spaces and 0x prefix)
-     * - Returns: Byte array
-     */
-    private func hexStringToBytes(_ hex: String) -> [UInt8]? {
+
+    deinit { for client in clients.values { client.close() } }
+
+    private static func hexStringToBytes(_ hex: String) -> [UInt8]? {
         // Remove spaces, 0x prefixes, etc
         let cleanHex = hex.replacingOccurrences(of: "0x", with: "")
                           .replacingOccurrences(of: " ", with: "")
                           .replacingOccurrences(of: "\n", with: "")
         
+        guard cleanHex.count % 2 == 0 else { return nil }
         var bytes = [UInt8]()
         var i = cleanHex.startIndex
         
@@ -216,7 +134,7 @@ public class TcpSocketPlugin: CAPPlugin {
      * - Parameter bytes: Byte array
      * - Returns: Hex string
      */
-    private func bytesToHexString(_ bytes: [UInt8]) -> String {
+    private static func bytesToHexString(_ bytes: [UInt8]) -> String {
         return bytes.map { String(format: "%02x", $0) }.joined()
     }
 }

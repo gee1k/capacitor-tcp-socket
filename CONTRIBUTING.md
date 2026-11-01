@@ -2,6 +2,12 @@
 
 This guide provides instructions for contributing to this Capacitor plugin.
 
+Development uses Node 22+ and JDK 21. Build the root package before installing
+and syncing `example/`, which depends on the local plugin. See
+[example/README.md](example/README.md) for real device/emulator TCP tests and
+browser tests. iOS builds require macOS/Xcode; a web build alone does not verify
+the native implementation. The CI workflow builds both CocoaPods and SPM examples.
+
 ## Developing
 
 ### Local Setup

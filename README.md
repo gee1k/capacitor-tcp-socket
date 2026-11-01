@@ -11,6 +11,32 @@ npm install capacitor-tcp-socket
 npx cap sync
 ```
 
+## Platform support
+
+The plugin supports Capacitor 7 and 8. The example uses Capacitor 8 (Node 22+,
+JDK 21, Android SDK 36, Xcode 26+). Browser TCP is intentionally unsupported.
+
+On iOS, TCP uses Apple's Network.framework; there is no SwiftSocket dependency
+or host Podfile Swift-version workaround. CocoaPods and Swift Package Manager
+are supported. For a new Capacitor 8 app, use `npx cap add ios --packagemanager SPM`
+then `npx cap sync ios`. The Swift package product is `CapacitorTcpSocket` and
+requires iOS 15+. Existing CocoaPods apps can continue using `npx cap sync ios`.
+
+For LAN connections, add `NSLocalNetworkUsageDescription` to the app's Info.plist
+and allow local network access on the device. Bonjour service declarations are
+only needed if your app actually browses/advertises those services. A successful
+simulator connection does not establish that a physical device can reach the
+same address: check the device's network, permission and server/firewall logs.
+
+`read()` performs one read of up to `expectLen` bytes, not a persistent listener
+and not a TCP message boundary. Call it again to receive subsequent data. Timeout
+returns an empty result, EOF rejects with code `EOF`, and concurrent reads on the
+same iOS client reject. A zero timeout waits indefinitely. TCP server-side
+`bind`/`listen`/`accept` APIs are not implemented.
+
+See [example/README.md](example/README.md) for the real native TCP smoke test and
+browser integration tests.
+
 ## Basic Usage
 
 ```typescript
@@ -180,7 +206,7 @@ const binaryFromHex = hexToBytes(result.result);
 - Not supported on the web platform.
 
 ### iOS
-- iOS implementation uses the SwiftSocket library for TCP functionality.
+- iOS implementation uses Apple's Network.framework for asynchronous TCP communication.
 - Supports setting a timeout for read operations (via the `timeout` parameter).
 
 ### Android

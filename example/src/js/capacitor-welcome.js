@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core';
+import { runTcpSmokeTest } from './smoke-test';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { TcpSocket } from 'capacitor-tcp-socket';
 
@@ -14,7 +16,7 @@ window.customElements.define(
     constructor() {
       super();
 
-      SplashScreen.hide();
+      if (Capacitor.isNativePlatform()) SplashScreen.hide().catch(console.error);
 
       const root = this.attachShadow({ mode: 'open' });
 
@@ -207,6 +209,7 @@ window.customElements.define(
           </div>
           
           <div class="button-group">
+            <button class="button" id="smoke-btn">Run TCP smoke test</button>
             <button class="button" id="connect-btn">Connect</button>
             <button class="button" id="disconnect-btn" disabled>Disconnect</button>
           </div>
@@ -251,7 +254,7 @@ window.customElements.define(
           </div>
           
           <div class="form-group">
-            <label for="read-timeout">Timeout (seconds, iOS only)</label>
+            <label for="read-timeout">Timeout (seconds)</label>
             <input type="number" id="read-timeout" value="5" min="1">
           </div>
           
@@ -357,10 +360,13 @@ window.customElements.define(
         if (type === 'success') logEntry.classList.add('log-success');
         
         const time = new Date().toLocaleTimeString();
-        logEntry.innerHTML = `
-          <span class="log-time">[${time}]</span>
-          <span class="log-message">${message}</span>
-        `;
+        const timestamp = document.createElement('span');
+        timestamp.className = 'log-time';
+        timestamp.textContent = `[${time}]`;
+        const content = document.createElement('span');
+        content.className = 'log-message';
+        content.textContent = message;
+        logEntry.append(timestamp, content);
         
         logArea.appendChild(logEntry);
         logArea.scrollTop = logArea.scrollHeight;
@@ -424,6 +430,19 @@ window.customElements.define(
         }
       });
       
+      const smokeBtn = this.shadowRoot.querySelector('#smoke-btn');
+      smokeBtn.addEventListener('click', async () => {
+        smokeBtn.disabled = true;
+        try {
+          const checks = await runTcpSmokeTest(ipAddressInput.value.trim(), Number(portInput.value));
+          log(`Smoke test passed: ${checks.join('; ')}`, 'success');
+          this.dataset.smokeResult = 'passed';
+        } catch (error) {
+          log(`Smoke test failed: ${error.message}`, 'error');
+          this.dataset.smokeResult = `failed: ${error.message}`;
+        } finally { smokeBtn.disabled = false; }
+      });
+
       // Disconnect from server
       disconnectBtn.addEventListener('click', async () => {
         if (clientId === null) {
