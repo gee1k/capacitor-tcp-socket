@@ -94,12 +94,33 @@ final class TcpSocketTests: XCTestCase {
         client.send(Data("late".utf8)) { XCTAssertNil($0) }
         wait(for: [received], timeout: 5)
         let closed = expectation(description: "closed")
-        client.read(length: 1024, timeout: 0) { result in
+        client.read(length: 1024, timeout: 30) { result in
             if case .success = result { XCTFail("Expected EOF") }
             closed.fulfill()
         }
         client.close()
         wait(for: [closed], timeout: 3)
+    }
+
+    func testNonpositiveTimeoutPollsAndPreservesLaterData() throws {
+        let client = TcpConnection(host: "127.0.0.1", port: try startServer())
+        defer { client.close() }
+        let connected = expectation(description: "connected")
+        client.connect { XCTAssertNil($0); connected.fulfill() }
+        wait(for: [connected], timeout: 5)
+        for seconds in [0, -1] {
+            let polled = expectation(description: "nonblocking poll")
+            client.read(length: 1024, timeout: seconds) { result in
+                XCTAssertEqual(try? result.get(), Data()); polled.fulfill()
+            }
+            wait(for: [polled], timeout: 1)
+        }
+        let received = expectation(description: "receive after polls")
+        client.read(length: 1024, timeout: 2) { result in
+            XCTAssertEqual(try? result.get(), Data("afterPoll".utf8)); received.fulfill()
+        }
+        client.send(Data("afterPoll".utf8)) { XCTAssertNil($0) }
+        wait(for: [received], timeout: 5)
     }
 
     func testConcurrentReadsAreQueuedWithoutLosingBytes() throws {

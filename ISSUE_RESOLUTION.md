@@ -24,7 +24,7 @@
 - 原 `connect/send/read/disconnect` 接口、默认端口、编码和客户端编号用法保留。
 - iOS EOF 默认返回空串，保持旧版行为；新增 `rejectOnEOF: true` 可显式获得 EOF 错误码。Android 默认继续拒绝 EOF，也支持显式 false。
 - iOS 重复 disconnect 已成功连接过的 client 仍成功；不存在的 client 仍拒绝。
-- iOS 空串发送和旧版奇数位 Hex 解析行为保留；无效端口、非正读取长度、负超时明确拒绝。
+- iOS 空串发送和旧版奇数位 Hex 解析行为保留；无效端口、非正读取长度明确拒绝。最终 review 恢复 iOS 非正 read timeout 的非阻塞轮询语义，以及原生读取错误/断开后读取的空串结果；accept 的负超时仍拒绝。
 - 同一 iOS client 的并发 read 按调用顺序排队；超时不会丢掉仍在接收中的数据。
 - 对端半关闭发送方向后，本端仍可以 send；已通过真实 NWConnection 测试。
 - Android 默认最低 API 恢复 23，优先采用宿主配置；服务端集合实现不使用 API 24 专属工厂方法。

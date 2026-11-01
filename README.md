@@ -32,7 +32,10 @@ same address: check the device's network, permission and server/firewall logs.
 and not a TCP message boundary. Call it again to receive subsequent data. Timeout
 returns an empty result. Set `rejectOnEOF: true` to reject EOF with code `EOF`;
 by default iOS preserves its legacy empty EOF result and Android rejects EOF. Concurrent reads on the
-same iOS client are queued in invocation order. A zero timeout waits indefinitely. TCP servers use `listen({ ipAddress, port })`, `accept({ server, timeout })`, and
+same iOS client are queued in invocation order. For legacy compatibility, iOS read
+timeouts of zero or less poll without waiting; Android read timeout zero waits indefinitely.
+iOS native read failures and reads after disconnect preserve the legacy empty result;
+invalid arguments still reject. TCP servers use `listen({ ipAddress, port })`, `accept({ server, timeout })`, and
 `closeServer({ server })`. Listening defaults to loopback and port 0 (OS assigned).
 Use `0.0.0.0` explicitly for LAN access. Accepted client IDs use the same
 `send`/`read`/`disconnect` methods. Closing a server rejects pending accept with
@@ -449,13 +452,13 @@ Result of a read operation
 
 Options for reading data from a TCP server
 
-| Prop              | Type                                                  | Description                                                                                                                | Default                        |
-| ----------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
-| **`rejectOnEOF`** | <code>boolean</code>                                  | Reject with code EOF when the peer closes the connection. Defaults to false on iOS for compatibility, and true on Android. |                                |
-| **`client`**      | <code>number</code>                                   | Client ID from a previous connect call                                                                                     |                                |
-| **`expectLen`**   | <code>number</code>                                   | Expected number of bytes to read                                                                                           |                                |
-| **`timeout`**     | <code>number</code>                                   | Read timeout in seconds                                                                                                    | <code>10</code>                |
-| **`encoding`**    | <code><a href="#dataencoding">DataEncoding</a></code> | Preferred encoding for returned data                                                                                       | <code>DataEncoding.UTF8</code> |
+| Prop              | Type                                                  | Description                                                                                                                                      | Default                        |
+| ----------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------ |
+| **`rejectOnEOF`** | <code>boolean</code>                                  | Reject with code EOF when the peer closes the connection. Defaults to false on iOS for compatibility, and true on Android.                       |                                |
+| **`client`**      | <code>number</code>                                   | Client ID from a previous connect call                                                                                                           |                                |
+| **`expectLen`**   | <code>number</code>                                   | Expected number of bytes to read                                                                                                                 |                                |
+| **`timeout`**     | <code>number</code>                                   | Read timeout in seconds. On iOS, zero/negative values poll without waiting. On Android, zero waits indefinitely and negative values are invalid. | <code>10</code>                |
+| **`encoding`**    | <code><a href="#dataencoding">DataEncoding</a></code> | Preferred encoding for returned data                                                                                                             | <code>DataEncoding.UTF8</code> |
 
 
 #### DisconnectResult

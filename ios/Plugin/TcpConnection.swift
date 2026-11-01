@@ -78,12 +78,11 @@ final class TcpConnection {
         readLimit = length
         pendingRead = completion
         if deliver() { return }
-        if timeout > 0 {
-            let timer = DispatchWorkItem { [weak self] in self?.completeRead(.success(Data())) }
-            readTimer = timer
-            queue.asyncAfter(deadline: .now() + .seconds(timeout), execute: timer)
-        }
+        // SwiftSocket used a nonblocking socket: zero/negative timeouts poll.
+        let timer = DispatchWorkItem { [weak self] in self?.completeRead(.success(Data())) }
+        readTimer = timer
         receive()
+        queue.asyncAfter(deadline: .now() + .seconds(max(0, timeout)), execute: timer)
     }
 
     @discardableResult private func deliver() -> Bool {

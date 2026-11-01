@@ -90,12 +90,15 @@ public class TcpSocketPlugin extends Plugin {
                 Socket socket = server.accept();
                 JSObject result = new JSObject();
                 result.put("client", registerClient(socket));
+                accepting.remove(id);
                 call.resolve(result);
             } catch (SocketTimeoutException error) {
+                accepting.remove(id);
                 call.reject("Accept timed out", "TIMEOUT");
             } catch (IOException error) {
+                accepting.remove(id);
                 call.reject("Accept failed: " + error.getMessage(), server.isClosed() ? "CLOSED" : null);
-            } finally { accepting.remove(id); }
+            }
         }).start();
     }
 

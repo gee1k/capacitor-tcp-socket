@@ -131,10 +131,15 @@ public class TcpSocketPlugin: CAPPlugin, CAPBridgedPlugin {
         }
     }
 
-    private func withClient(_ call: CAPPluginCall, action: @escaping (TcpConnection) -> Void) {
+    private func withClient(_ call: CAPPluginCall, onDisconnected: (() -> Void)? = nil, action: @escaping (TcpConnection) -> Void) {
         queue.async {
-            guard let id = call.getInt("client"), let client = self.clients[id] else {
+            guard let id = call.getInt("client"), id >= 0, id < self.nextClient else {
                 call.reject("Client not specified or disconnected"); return
+            }
+            guard let client = self.clients[id] else {
+                if let onDisconnected = onDisconnected { onDisconnected() }
+                else { call.reject("Client not specified or disconnected") }
+                return
             }
             action(client)
         }
@@ -163,16 +168,20 @@ public class TcpSocketPlugin: CAPPlugin, CAPBridgedPlugin {
         let length = call.getInt("expectLen", 1024)
         let timeout = call.getInt("timeout", 10)
         let encoding = call.getString("encoding", "utf8")
-        guard length > 0, timeout >= 0 else { call.reject("Invalid read length or timeout"); return }
+        guard length > 0 else { call.reject("Invalid read length"); return }
         guard ["utf8", "base64", "hex"].contains(encoding) else {
             call.reject("Unsupported encoding: \(encoding)"); return
         }
-        withClient(call) { client in
+        withClient(call, onDisconnected: {
+            if call.getBool("rejectOnEOF", false) { call.reject("Read failed: Connection closed", "EOF") }
+            else { call.resolve(["result": "", "encoding": encoding]) }
+        }) { client in
             client.read(length: length, timeout: timeout) { result in
                 switch result {
                 case .failure(let error):
                     let code = (error as? TcpConnection.SocketError) == .closed ? "EOF" : nil
-                    if code == "EOF", !call.getBool("rejectOnEOF", false) {
+                    // The old iOS read returned an empty result for native errors too.
+                    if code == nil || !call.getBool("rejectOnEOF", false) {
                         call.resolve(["result": "", "encoding": encoding])
                     } else {
                         call.reject("Read failed: \(error.localizedDescription)", code)

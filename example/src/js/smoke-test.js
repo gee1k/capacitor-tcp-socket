@@ -78,6 +78,15 @@ async function runTcpServerSmokeTest() {
     const pending = TcpSocket.accept({ server, timeout: 5 });
     outgoing = (await TcpSocket.connect({ ipAddress: '127.0.0.1', port })).client;
     incoming = (await pending).client;
+    if (Capacitor.getPlatform() === 'ios') {
+      for (const timeout of [0, -1]) {
+        const poll = await TcpSocket.read({ client: outgoing, expectLen: 2, timeout });
+        if (poll.result !== '') throw new Error('Legacy iOS nonblocking poll failed');
+      }
+      await TcpSocket.send({ client: outgoing, data: '' });
+      await TcpSocket.send({ client: outgoing, data: 'f', encoding: 'hex' });
+      await readText(incoming, '0f');
+    }
     await TcpSocket.send({ client: outgoing, data: '00017fff', encoding: 'hex' });
     await readText(incoming, '00017fff');
     await TcpSocket.send({ client: incoming, data: 'e4b8ade69687', encoding: 'hex' });
@@ -95,6 +104,12 @@ async function runTcpServerSmokeTest() {
   } finally {
     if (!closed) await TcpSocket.closeServer({ server });
     if (incoming !== undefined) await TcpSocket.disconnect({ client: incoming });
-    if (outgoing !== undefined) await TcpSocket.disconnect({ client: outgoing });
+    if (outgoing !== undefined) {
+      await TcpSocket.disconnect({ client: outgoing });
+      if (Capacitor.getPlatform() === 'ios') {
+        const closedRead = await TcpSocket.read({ client: outgoing, expectLen: 2 });
+        if (closedRead.result !== '') throw new Error('Legacy iOS read after disconnect failed');
+      }
+    }
   }
 }

@@ -129,7 +129,8 @@ export interface ReadOptions {
   expectLen: number;
   
   /**
-   * Read timeout in seconds
+   * Read timeout in seconds. On iOS, zero/negative values poll without waiting.
+   * On Android, zero waits indefinitely and negative values are invalid.
    * @default 10
    */
   timeout?: number;
