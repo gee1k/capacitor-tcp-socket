@@ -1,0 +1,11 @@
+Release: v8.0.0
+Published source tag: e7ba8672b65a940b72eeb1769b6315e2d2d759a3 (unchanged)
+Publishing workflow fix: 49e35a7 (OIDC, no NPM_TOKEN dependency)
+Run: https://github.com/gee1k/capacitor-tcp-socket/actions/runs/41314698422
+Result: success; npm trusted publisher status Valid
+Provenance: https://search.sigstore.dev/?logIndex=3632114401
+Tarball SHA1: 14a12ded79b1a28b5e41986c250fe8c1b2ce476b
+Public registry latest: 8.0.0
+Fresh-directory and empty-cache install: capacitor-tcp-socket@8.0.0 with @capacitor/core@8.6.0 succeeded.
+Verified: seven public API methods; Swift package, podspec, Swift/Java implementation, TypeScript declarations and migration guide present.
+Earlier token-based publish run 41312246694 failed E404; preserved as historical evidence.
