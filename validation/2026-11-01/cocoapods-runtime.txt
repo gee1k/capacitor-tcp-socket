@@ -1,0 +1,51 @@
+cocoapods example: native bridge TCP log excerpt, 2026-11-01 Asia/Shanghai
+Source: cocoapods-example-runtime.log, lines 8-52
+Original SHA-256: 3fc14a892a73918f04df6dea514669df7df3a66bdf0c358f1722ac577746b519
+UI confirmation: Smoke test passed (observed via Device Hub).
+EOF rejection below is expected and checked by the smoke test.
+
+⚡️  To Native ->  TcpSocket connect 11253059
+⚡️  TO JS {"client":0}
+⚡️  To Native ->  TcpSocket send 11253060
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 11253061
+⚡️  TO JS {"result":"first echo","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket send 11253062
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 11253063
+⚡️  TO JS {"result":"second echo","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket send 11253064
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 11253065
+⚡️  TO JS {"result":"00017fff","encoding":"hex"}
+⚡️  To Native ->  TcpSocket send 11253066
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 11253067
+⚡️  TO JS {"result":"AAEC\/w==","encoding":"base64"}
+⚡️  To Native ->  TcpSocket send 11253068
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 11253069
+⚡️  TO JS {"result":"buff","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 11253070
+⚡️  TO JS {"result":"ered","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 11253071
+⚡️  TO JS {"result":"-rea","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 11253072
+⚡️  TO JS {"result":"d-re","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 11253073
+⚡️  TO JS {"result":"gres","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 11253074
+⚡️  TO JS {"result":"sion","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 11253075
+⚡️  TO JS {"encoding":"utf8","result":""}
+⚡️  To Native ->  TcpSocket send 11253076
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 11253077
+⚡️  TO JS {"encoding":"utf8","result":"DELAY\n"}
+⚡️  To Native ->  TcpSocket send 11253078
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 11253079
+ERROR MESSAGE:  {"errorMessage":"Read failed: Connection closed","message":"Read failed: Connection closed","code":"EOF"}
+⚡️  [error] - {"errorMessage":"Read failed: Connection closed","message":"Read failed: Connection closed","code":"EOF"}
+⚡️  To Native ->  TcpSocket disconnect 11253080
+⚡️  TO JS {"client":0}

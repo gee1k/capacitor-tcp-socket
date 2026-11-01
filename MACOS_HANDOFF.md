@@ -1,10 +1,16 @@
 # macOS 本地接续说明
 
+最新全量处理结果见 [ISSUE_RESOLUTION.md](ISSUE_RESOLUTION.md)。下面保留第一轮交接与验证背景。
+
 ## 当前目标与状态
 
 继续处理 #3（SwiftSocket 的 Swift 版本导致 iOS 构建失败）和 #8（SPM / Capacitor 8）。
 用户要求：**必须把插件实际接入 example，运行原生应用并验证真实 TCP 收发。**
-目前是待验证实现，不能把这些 issue 标为已验证修复。
+截至云端交接时是待验证实现。**2026-11-01 已完成本机 iOS 模拟器接续验证：
+CocoaPods / SPM example 均编译成功、各自实际运行并通过真实 TCP smoke test；
+CocoaPods 与 SPM 原生测试各 3 项通过、0 失败。**
+环境、执行命令、日志证据和验证边界见 [MACOS_VALIDATION.md](MACOS_VALIDATION.md)。
+这不改变下表中的历史云端结果，也不代表 Android 云端失败或 iOS 真机问题已解决。
 
 已实现：
 

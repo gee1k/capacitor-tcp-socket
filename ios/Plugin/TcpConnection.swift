@@ -8,26 +8,31 @@ final class TcpConnection {
     private let connection: NWConnection
     private var buffer = Data()
     private var receiving = false
+    private var readEnded = false
     private var terminalError: Error?
     private var connecting: ((Error?) -> Void)?
     private var pendingRead: ((Result<Data, Error>) -> Void)?
+    private var queuedReads: [(Int, Int, (Result<Data, Error>) -> Void)] = []
     private var readLimit = 0
     private var readTimer: DispatchWorkItem?
     private var connectTimer: DispatchWorkItem?
 
     enum SocketError: LocalizedError, Equatable {
-        case closed, timeout, busy
+        case closed, timeout
         var errorDescription: String? {
             switch self {
             case .closed: return "Connection closed"
             case .timeout: return "Connection timed out"
-            case .busy: return "A read is already pending for this client"
             }
         }
     }
 
     init(host: String, port: UInt16) {
         connection = NWConnection(host: NWEndpoint.Host(host), port: NWEndpoint.Port(rawValue: port)!, using: .tcp)
+    }
+
+    init(connection: NWConnection) {
+        self.connection = connection
     }
 
     func connect(completion: @escaping (Error?) -> Void) {
@@ -62,17 +67,23 @@ final class TcpConnection {
 
     func read(length: Int, timeout: Int, completion: @escaping (Result<Data, Error>) -> Void) {
         queue.async {
-            guard self.pendingRead == nil else { completion(.failure(SocketError.busy)); return }
-            self.readLimit = length
-            self.pendingRead = completion
-            if self.deliver() { return }
-            if timeout > 0 {
-                let timer = DispatchWorkItem { [weak self] in self?.completeRead(.success(Data())) }
-                self.readTimer = timer
-                self.queue.asyncAfter(deadline: .now() + .seconds(timeout), execute: timer)
-            }
-            self.receive()
+            self.queuedReads.append((length, timeout, completion))
+            self.startNextRead()
         }
+    }
+
+    private func startNextRead() {
+        guard pendingRead == nil, !queuedReads.isEmpty else { return }
+        let (length, timeout, completion) = queuedReads.removeFirst()
+        readLimit = length
+        pendingRead = completion
+        if deliver() { return }
+        if timeout > 0 {
+            let timer = DispatchWorkItem { [weak self] in self?.completeRead(.success(Data())) }
+            readTimer = timer
+            queue.asyncAfter(deadline: .now() + .seconds(timeout), execute: timer)
+        }
+        receive()
     }
 
     @discardableResult private func deliver() -> Bool {
@@ -84,18 +95,19 @@ final class TcpConnection {
             return true
         }
         if let error = terminalError { completeRead(.failure(error)); return true }
+        if readEnded { completeRead(.failure(SocketError.closed)); return true }
         return false
     }
 
     private func receive() {
-        guard !receiving, terminalError == nil else { return }
+        guard !receiving, !readEnded, terminalError == nil else { return }
         receiving = true
         connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { [weak self] data, _, done, error in
             guard let self = self else { return }
             self.receiving = false
             if let data = data { self.buffer.append(data) }
             if let error = error { self.terminalError = error }
-            else if done { self.terminalError = SocketError.closed }
+            else if done { self.readEnded = true }
             if !self.deliver(), self.pendingRead != nil { self.receive() }
         }
     }
@@ -106,6 +118,7 @@ final class TcpConnection {
         let callback = pendingRead
         pendingRead = nil
         callback?(result)
+        queue.async { self.startNextRead() }
     }
 
     private func finish(_ error: Error) {

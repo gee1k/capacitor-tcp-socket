@@ -18,6 +18,10 @@ import type {
  * Consider using WebSockets as an alternative for web applications.
  */
 export class TcpSocketWeb extends WebPlugin implements TcpSocketPlugin {
+  async listen(): Promise<never> { throw this.unimplemented(this.ERROR_MESSAGE); }
+  async accept(): Promise<never> { throw this.unimplemented(this.ERROR_MESSAGE); }
+  async closeServer(): Promise<never> { throw this.unimplemented(this.ERROR_MESSAGE); }
+
   private readonly ERROR_MESSAGE = 'TCP sockets are not supported in web browsers.';
   
   /**

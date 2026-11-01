@@ -1,0 +1,37 @@
+2026-11-01 Asia/Shanghai. All four commands exited 0.
+Raw logs: /private/tmp/tcp-socket-validation-20261101/
+
+cocoapods-build.log
+Original SHA-256: 24400bf9f133d08de0001b2f06f6e6ffbb7ba73c31d4ae3a06ec62891c43567f
+** BUILD SUCCEEDED **
+
+spm-build.log
+Original SHA-256: c32f6aa9b272d4d5360a58bc6f53f21aea84ed32a114c5e44ae4b25cb2a9d4ad
+** BUILD SUCCEEDED **
+SPM example: /var/folders/9p/33kz0pws71j_jq32sfgqvngm0000gn/T/tcp-spm-example-Oy4MMv
+
+spm-tests.log
+Original SHA-256: 901b077d9aa2985713d3a6659aabc744289ad11129ff05301e5e1eb009c11462
+Test Case '-[TcpSocketPluginTests.TcpSocketTests testPeerCloseReportsEOF]' started.
+Test Case '-[TcpSocketPluginTests.TcpSocketTests testPeerCloseReportsEOF]' passed (0.007 seconds).
+Test Case '-[TcpSocketPluginTests.TcpSocketTests testRepeatedReadsAndBufferedRemainder]' started.
+Test Case '-[TcpSocketPluginTests.TcpSocketTests testRepeatedReadsAndBufferedRemainder]' passed (0.416 seconds).
+Test Case '-[TcpSocketPluginTests.TcpSocketTests testTimeoutDoesNotLoseNextReceiveAndCloseRejectsPendingRead]' started.
+Test Case '-[TcpSocketPluginTests.TcpSocketTests testTimeoutDoesNotLoseNextReceiveAndCloseRejectsPendingRead]' passed (1.256 seconds).
+	 Executed 3 tests, with 0 failures (0 unexpected) in 1.680 (1.682) seconds
+	 Executed 3 tests, with 0 failures (0 unexpected) in 1.680 (1.682) seconds
+	 Executed 3 tests, with 0 failures (0 unexpected) in 1.680 (1.683) seconds
+** TEST SUCCEEDED **
+
+pods-tests.log
+Original SHA-256: b6fc804d12d4a545ef353b9e970a7d4767a247c986e83e2ccd6db14b6067d852
+Test Case '-[PluginTests.TcpSocketTests testPeerCloseReportsEOF]' started.
+Test Case '-[PluginTests.TcpSocketTests testPeerCloseReportsEOF]' passed (0.010 seconds).
+Test Case '-[PluginTests.TcpSocketTests testRepeatedReadsAndBufferedRemainder]' started.
+Test Case '-[PluginTests.TcpSocketTests testRepeatedReadsAndBufferedRemainder]' passed (0.416 seconds).
+Test Case '-[PluginTests.TcpSocketTests testTimeoutDoesNotLoseNextReceiveAndCloseRejectsPendingRead]' started.
+Test Case '-[PluginTests.TcpSocketTests testTimeoutDoesNotLoseNextReceiveAndCloseRejectsPendingRead]' passed (1.251 seconds).
+	 Executed 3 tests, with 0 failures (0 unexpected) in 1.678 (1.680) seconds
+	 Executed 3 tests, with 0 failures (0 unexpected) in 1.678 (1.681) seconds
+	 Executed 3 tests, with 0 failures (0 unexpected) in 1.678 (1.681) seconds
+** TEST SUCCEEDED **

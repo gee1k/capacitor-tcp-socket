@@ -13,6 +13,12 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
+import java.net.ServerSocket;
+import java.net.InetSocketAddress;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Collections;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +36,81 @@ import android.util.Base64;
 public class TcpSocketPlugin extends Plugin {
     private static final String TAG = "TcpSocketPlugin";
     public static final String READ_EOF_ERROR_CODE = "EOF";
-    private List<Socket> clients = new ArrayList<>();
+    private List<Socket> clients = Collections.synchronizedList(new ArrayList<>());
+    private final Map<Integer, ServerSocket> servers = new ConcurrentHashMap<>();
+    private final java.util.Set<Integer> accepting = Collections.newSetFromMap(new ConcurrentHashMap<Integer, Boolean>());
+    private final AtomicInteger nextServer = new AtomicInteger();
+    private volatile boolean destroyed;
+
+    private int registerClient(Socket socket) throws IOException {
+        synchronized (clients) {
+            if (destroyed) { socket.close(); throw new IOException("Plugin destroyed"); }
+            clients.add(socket);
+            return clients.size() - 1;
+        }
+    }
+
+    @PluginMethod
+    public void listen(PluginCall call) {
+        int port = call.getInt("port", 0);
+        String address = call.getString("ipAddress", "127.0.0.1");
+        if (port < 0 || port > 65535 || address.isEmpty()) { call.reject("Invalid bind address or port"); return; }
+        new Thread(() -> {
+            ServerSocket server = null;
+            try {
+                server = new ServerSocket();
+                server.bind(new InetSocketAddress(address, port));
+                int id = nextServer.getAndIncrement();
+                synchronized (servers) {
+                    if (destroyed) throw new IOException("Plugin destroyed");
+                    servers.put(id, server);
+                }
+                JSObject result = new JSObject();
+                result.put("server", id);
+                result.put("port", server.getLocalPort());
+                call.resolve(result);
+            } catch (IOException | IllegalArgumentException error) {
+                if (server != null) try { server.close(); } catch (IOException ignored) { }
+                call.reject("Listen failed: " + error.getMessage());
+            }
+        }).start();
+    }
+
+    @PluginMethod
+    public void accept(PluginCall call) {
+        int id = call.getInt("server", -1);
+        int timeout = call.getInt("timeout", 10);
+        ServerSocket server = servers.get(id);
+        if (server == null) { call.reject("Unknown server"); return; }
+        if (timeout < 0 || timeout > Integer.MAX_VALUE / 1000) { call.reject("Invalid timeout"); return; }
+        if (!accepting.add(id)) { call.reject("An accept is already pending"); return; }
+        new Thread(() -> {
+            try {
+                server.setSoTimeout(timeout * 1000);
+                Socket socket = server.accept();
+                JSObject result = new JSObject();
+                result.put("client", registerClient(socket));
+                call.resolve(result);
+            } catch (SocketTimeoutException error) {
+                call.reject("Accept timed out", "TIMEOUT");
+            } catch (IOException error) {
+                call.reject("Accept failed: " + error.getMessage(), server.isClosed() ? "CLOSED" : null);
+            } finally { accepting.remove(id); }
+        }).start();
+    }
+
+    @PluginMethod
+    public void closeServer(PluginCall call) {
+        int id = call.getInt("server", -1);
+        ServerSocket server = servers.remove(id);
+        if (server == null) { call.reject("Unknown server"); return; }
+        try {
+            server.close();
+            JSObject result = new JSObject();
+            result.put("server", id);
+            call.resolve(result);
+        } catch (IOException error) { call.reject(error.getMessage()); }
+    }
     
     // Supported data encoding types
     private enum DataEncoding {
@@ -78,10 +158,9 @@ public class TcpSocketPlugin extends Plugin {
 
         try {
             Socket socket = new Socket(ipAddress, port);
-            clients.add(socket);
-            
+            int id = registerClient(socket);
             JSObject ret = new JSObject();
-            ret.put("client", clients.size() - 1);
+            ret.put("client", id);
             call.resolve(ret);
         } catch (IOException e) {
             Log.e(TAG, "Connection failed: " + e.getMessage());
@@ -214,7 +293,14 @@ public class TcpSocketPlugin extends Plugin {
                     int read = inputStream.read(bytes, 0, length);
 
                     if (read == -1) {
-                        call.reject("Connection closed", READ_EOF_ERROR_CODE);
+                        if (call.getBoolean("rejectOnEOF", true)) {
+                            call.reject("Connection closed", READ_EOF_ERROR_CODE);
+                        } else {
+                            JSObject eof = new JSObject();
+                            eof.put("result", "");
+                            eof.put("encoding", encoding.getValue());
+                            call.resolve(eof);
+                        }
                         return;
                     }
 
@@ -325,10 +411,17 @@ public class TcpSocketPlugin extends Plugin {
      */
     @Override
     protected void handleOnDestroy() {
-        for (Socket socket : clients) {
-            closeSocketSafely(socket);
+        destroyed = true;
+        synchronized (servers) {
+            for (ServerSocket server : servers.values()) {
+                try { server.close(); } catch (IOException ignored) { }
+            }
+            servers.clear();
         }
-        clients.clear();
+        synchronized (clients) {
+            for (Socket socket : clients) closeSocketSafely(socket);
+            clients.clear();
+        }
         super.handleOnDestroy();
     }
     

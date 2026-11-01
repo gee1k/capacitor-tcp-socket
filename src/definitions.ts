@@ -3,6 +3,13 @@
  * Provides methods for TCP socket communication
  */
 export interface TcpSocketPlugin {
+  /** Bind and listen for incoming TCP connections. Defaults to loopback and an OS-assigned port. */
+  listen(options: ListenOptions): Promise<ListenResult>;
+  /** Accept the next incoming connection. The returned client supports send/read/disconnect. */
+  accept(options: AcceptOptions): Promise<ConnectResult>;
+  /** Stop listening and reject pending accepts. Already accepted clients remain open. */
+  closeServer(options: CloseServerOptions): Promise<CloseServerOptions>;
+
   /**
    * Connects to a TCP server
    * @param options Connection options including IP address and port
@@ -106,6 +113,12 @@ export interface SendOptions {
  */
 export interface ReadOptions {
   /**
+   * Reject with code EOF when the peer closes the connection.
+   * Defaults to false on iOS for compatibility, and true on Android.
+   */
+  rejectOnEOF?: boolean;
+
+  /**
    * Client ID from a previous connect call
    */
   client: number;
@@ -162,4 +175,23 @@ export interface DisconnectResult {
    * Client ID that was disconnected
    */
   client: number;
+}
+
+export interface ListenOptions {
+  /** Local bind address. Use 0.0.0.0 explicitly to allow LAN clients. */
+  ipAddress?: string;
+  /** Local port; 0 asks the operating system to assign one. */
+  port?: number;
+}
+export interface ListenResult {
+  server: number;
+  port: number;
+}
+export interface AcceptOptions {
+  server: number;
+  /** Seconds to wait; defaults to 10. Zero waits indefinitely. */
+  timeout?: number;
+}
+export interface CloseServerOptions {
+  server: number;
 }

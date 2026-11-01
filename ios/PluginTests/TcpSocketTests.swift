@@ -102,6 +102,57 @@ final class TcpSocketTests: XCTestCase {
         wait(for: [closed], timeout: 3)
     }
 
+    func testConcurrentReadsAreQueuedWithoutLosingBytes() throws {
+        let client = TcpConnection(host: "127.0.0.1", port: try startServer())
+        defer { client.close() }
+        let connected = expectation(description: "connected")
+        client.connect { XCTAssertNil($0); connected.fulfill() }
+        wait(for: [connected], timeout: 5)
+        let first = expectation(description: "first queued read")
+        let second = expectation(description: "second queued read")
+        client.read(length: 1, timeout: 2) { result in
+            XCTAssertEqual(try? result.get(), Data("a".utf8)); first.fulfill()
+        }
+        client.read(length: 1, timeout: 2) { result in
+            XCTAssertEqual(try? result.get(), Data("b".utf8)); second.fulfill()
+        }
+        client.send(Data("ab".utf8)) { XCTAssertNil($0) }
+        wait(for: [first, second], timeout: 5, enforceOrder: true)
+    }
+
+    func testPeerHalfCloseStillAllowsSending() throws {
+        let port = try startServer()
+        let received = expectation(description: "peer receives after its write side closes")
+        listener.newConnectionHandler = { connection in
+            self.accepted.append(connection)
+            connection.stateUpdateHandler = { state in
+                if case .ready = state {
+                    connection.send(content: nil, contentContext: .finalMessage, isComplete: true,
+                                    completion: .contentProcessed { error in XCTAssertNil(error) })
+                }
+            }
+            connection.start(queue: self.serverQueue)
+            connection.receive(minimumIncompleteLength: 1, maximumLength: 1024) { data, _, _, error in
+                XCTAssertNil(error)
+                XCTAssertEqual(data, Data("afterEOF".utf8))
+                received.fulfill()
+            }
+        }
+        let client = TcpConnection(host: "127.0.0.1", port: port)
+        defer { client.close() }
+        let connected = expectation(description: "connected")
+        client.connect { XCTAssertNil($0); connected.fulfill() }
+        wait(for: [connected], timeout: 5)
+        let eof = expectation(description: "read EOF")
+        client.read(length: 1024, timeout: 2) { result in
+            if case .success = result { XCTFail("Expected EOF") }
+            eof.fulfill()
+        }
+        wait(for: [eof], timeout: 5)
+        client.send(Data("afterEOF".utf8)) { XCTAssertNil($0) }
+        wait(for: [received], timeout: 5)
+    }
+
     func testPeerCloseReportsEOF() throws {
         let client = TcpConnection(host: "127.0.0.1", port: try startServer())
         defer { client.close() }

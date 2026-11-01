@@ -1,0 +1,47 @@
+tcp-final-native-tests.log
+Test Case '-[TcpSocketPluginTests.TcpSocketTests testConcurrentReadsAreQueuedWithoutLosingBytes]' started.
+Test Case '-[TcpSocketPluginTests.TcpSocketTests testConcurrentReadsAreQueuedWithoutLosingBytes]' passed (0.331 seconds).
+Test Case '-[TcpSocketPluginTests.TcpSocketTests testPeerCloseReportsEOF]' started.
+Test Case '-[TcpSocketPluginTests.TcpSocketTests testPeerCloseReportsEOF]' passed (0.004 seconds).
+Test Case '-[TcpSocketPluginTests.TcpSocketTests testPeerHalfCloseStillAllowsSending]' started.
+Test Case '-[TcpSocketPluginTests.TcpSocketTests testPeerHalfCloseStillAllowsSending]' passed (0.003 seconds).
+Test Case '-[TcpSocketPluginTests.TcpSocketTests testRepeatedReadsAndBufferedRemainder]' started.
+Test Case '-[TcpSocketPluginTests.TcpSocketTests testRepeatedReadsAndBufferedRemainder]' passed (0.415 seconds).
+Test Case '-[TcpSocketPluginTests.TcpSocketTests testTimeoutDoesNotLoseNextReceiveAndCloseRejectsPendingRead]' started.
+Test Case '-[TcpSocketPluginTests.TcpSocketTests testTimeoutDoesNotLoseNextReceiveAndCloseRejectsPendingRead]' passed (1.254 seconds).
+	 Executed 5 tests, with 0 failures (0 unexpected) in 2.007 (2.010) seconds
+	 Executed 5 tests, with 0 failures (0 unexpected) in 2.007 (2.014) seconds
+	 Executed 5 tests, with 0 failures (0 unexpected) in 2.007 (2.017) seconds
+** TEST SUCCEEDED **
+
+tcp-final-pods-tests.log
+Test Case '-[PluginTests.TcpSocketTests testConcurrentReadsAreQueuedWithoutLosingBytes]' started.
+Test Case '-[PluginTests.TcpSocketTests testConcurrentReadsAreQueuedWithoutLosingBytes]' passed (0.320 seconds).
+Test Case '-[PluginTests.TcpSocketTests testPeerCloseReportsEOF]' started.
+Test Case '-[PluginTests.TcpSocketTests testPeerCloseReportsEOF]' passed (0.005 seconds).
+Test Case '-[PluginTests.TcpSocketTests testPeerHalfCloseStillAllowsSending]' started.
+Test Case '-[PluginTests.TcpSocketTests testPeerHalfCloseStillAllowsSending]' passed (0.006 seconds).
+Test Case '-[PluginTests.TcpSocketTests testRepeatedReadsAndBufferedRemainder]' started.
+Test Case '-[PluginTests.TcpSocketTests testRepeatedReadsAndBufferedRemainder]' passed (0.416 seconds).
+Test Case '-[PluginTests.TcpSocketTests testTimeoutDoesNotLoseNextReceiveAndCloseRejectsPendingRead]' started.
+Test Case '-[PluginTests.TcpSocketTests testTimeoutDoesNotLoseNextReceiveAndCloseRejectsPendingRead]' passed (1.250 seconds).
+	 Executed 5 tests, with 0 failures (0 unexpected) in 1.996 (1.999) seconds
+	 Executed 5 tests, with 0 failures (0 unexpected) in 1.996 (2.000) seconds
+	 Executed 5 tests, with 0 failures (0 unexpected) in 1.996 (2.001) seconds
+** TEST SUCCEEDED **
+
+tcp-final-android-tests.log
+BUILD SUCCESSFUL in 15s
+
+tcp-final-reviewed-spm-build.log
+** BUILD SUCCEEDED **
+
+tcp-cap7-build-ios15.log
+** BUILD SUCCEEDED **
+
+tcp-browser-tests.log
+  2 passed (2.4s)
+
+Android report: {'name': 'com.getcapacitor.myapp.ExampleInstrumentedTest', 'tests': '2', 'failures': '0', 'errors': '0', 'skipped': '0', 'time': '9.266', 'timestamp': '2026-11-01T12:22:10', 'hostname': 'localhost'}
+{'name': 'useAppContext', 'classname': 'com.getcapacitor.myapp.ExampleInstrumentedTest', 'time': '0.02'}
+{'name': 'packagedExampleRunsRealTcpSmokeTest', 'classname': 'com.svend.capacitor.tcp.example.TcpExampleTest', 'time': '7.448'}

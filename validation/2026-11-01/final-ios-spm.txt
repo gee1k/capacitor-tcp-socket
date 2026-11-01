@@ -1,0 +1,90 @@
+Native bridge excerpt from tcp-final-spm-runtime.log
+⚡️  Loading app at capacitor://localhost...
+⚡️  WebView loaded
+⚡️  To Native ->  SplashScreen hide 41714111
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket listen 41714112
+⚡️  TO JS {"server":0,"port":60527}
+⚡️  To Native ->  TcpSocket accept 41714113
+ERROR MESSAGE:  {"message":"Accept timed out","errorMessage":"Accept timed out","code":"TIMEOUT"}
+⚡️  [error] - {"message":"Accept timed out","errorMessage":"Accept timed out","code":"TIMEOUT"}
+⚡️  To Native ->  TcpSocket accept 41714114
+⚡️  To Native ->  TcpSocket connect 41714115
+⚡️  TO JS {"client":0}
+⚡️  TO JS {"client":1}
+⚡️  To Native ->  TcpSocket send 41714116
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 41714117
+⚡️  TO JS {"encoding":"hex","result":"0001"}
+⚡️  To Native ->  TcpSocket read 41714118
+⚡️  TO JS {"encoding":"hex","result":"7fff"}
+⚡️  To Native ->  TcpSocket send 41714119
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 41714120
+⚡️  TO JS {"encoding":"hex","result":"e4b8"}
+⚡️  To Native ->  TcpSocket read 41714121
+⚡️  TO JS {"encoding":"hex","result":"ade6"}
+⚡️  To Native ->  TcpSocket read 41714122
+⚡️  TO JS {"encoding":"hex","result":"9687"}
+⚡️  To Native ->  TcpSocket accept 41714123
+⚡️  To Native ->  TcpSocket closeServer 41714124
+⚡️  TO JS {"server":0}
+ERROR MESSAGE:  {"errorMessage":"Server closed","message":"Server closed","code":"CLOSED"}
+⚡️  [error] - {"errorMessage":"Server closed","message":"Server closed","code":"CLOSED"}
+⚡️  To Native ->  TcpSocket send 41714125
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 41714126
+⚡️  TO JS {"encoding":"hex","result":"41"}
+⚡️  To Native ->  TcpSocket disconnect 41714127
+⚡️  TO JS {"client":1}
+⚡️  To Native ->  TcpSocket disconnect 41714128
+⚡️  TO JS {"client":0}
+⚡️  To Native ->  TcpSocket connect 41714129
+⚡️  TO JS {"client":2}
+⚡️  To Native ->  TcpSocket send 41714130
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 41714131
+⚡️  TO JS {"result":"first echo","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket send 41714132
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 41714133
+⚡️  TO JS {"result":"second echo","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket send 41714134
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 41714135
+⚡️  TO JS {"result":"00017fff","encoding":"hex"}
+⚡️  To Native ->  TcpSocket send 41714136
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 41714137
+⚡️  TO JS {"result":"AAEC\/w==","encoding":"base64"}
+⚡️  To Native ->  TcpSocket send 41714138
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 41714139
+⚡️  TO JS {"result":"buff","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 41714140
+⚡️  TO JS {"result":"ered","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 41714141
+⚡️  TO JS {"result":"-rea","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 41714142
+⚡️  TO JS {"result":"d-re","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 41714143
+⚡️  TO JS {"result":"gres","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 41714144
+⚡️  TO JS {"result":"sion","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 41714145
+⚡️  TO JS {"result":"","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket send 41714146
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 41714147
+⚡️  TO JS {"result":"DELAY\n","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket send 41714148
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 41714149
+⚡️  TO JS {"result":"","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 41714150
+ERROR MESSAGE:  {"code":"EOF","errorMessage":"Read failed: Connection closed","message":"Read failed: Connection closed"}
+⚡️  [error] - {"code":"EOF","errorMessage":"Read failed: Connection closed","message":"Read failed: Connection closed"}
+⚡️  To Native ->  TcpSocket disconnect 41714151
+⚡️  TO JS {"client":2}
+⚡️  To Native ->  TcpSocket disconnect 41714152
+⚡️  TO JS {"client":2}

@@ -1,0 +1,51 @@
+spm example: native bridge TCP log excerpt, 2026-11-01 Asia/Shanghai
+Source: spm-example-runtime.log, lines 8-52
+Original SHA-256: 8969f760f429bf26189e88b8592768be69517cd34fdaf0dd5440ace3c59c14ed
+UI confirmation: Smoke test passed (observed via Device Hub).
+EOF rejection below is expected and checked by the smoke test.
+
+⚡️  To Native ->  TcpSocket connect 107659226
+⚡️  TO JS {"client":0}
+⚡️  To Native ->  TcpSocket send 107659227
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 107659228
+⚡️  TO JS {"result":"first echo","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket send 107659229
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 107659230
+⚡️  TO JS {"result":"second echo","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket send 107659231
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 107659232
+⚡️  TO JS {"result":"00017fff","encoding":"hex"}
+⚡️  To Native ->  TcpSocket send 107659233
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 107659234
+⚡️  TO JS {"result":"AAEC\/w==","encoding":"base64"}
+⚡️  To Native ->  TcpSocket send 107659235
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 107659236
+⚡️  TO JS {"result":"buff","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 107659237
+⚡️  TO JS {"result":"ered","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 107659238
+⚡️  TO JS {"result":"-rea","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 107659239
+⚡️  TO JS {"result":"d-re","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 107659240
+⚡️  TO JS {"result":"gres","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 107659241
+⚡️  TO JS {"result":"sion","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 107659242
+⚡️  TO JS {"result":"","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket send 107659243
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 107659244
+⚡️  TO JS {"result":"DELAY\n","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket send 107659245
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 107659246
+ERROR MESSAGE:  {"code":"EOF","message":"Read failed: Connection closed","errorMessage":"Read failed: Connection closed"}
+⚡️  [error] - {"code":"EOF","message":"Read failed: Connection closed","errorMessage":"Read failed: Connection closed"}
+⚡️  To Native ->  TcpSocket disconnect 107659247
+⚡️  TO JS {"client":0}
