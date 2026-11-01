@@ -10,19 +10,16 @@ npm install capacitor-tcp-socket@^8
 npx cap sync
 ```
 
-V8 supports Capacitor 7 and 8, CocoaPods and Swift Package Manager. The example
+Supports Capacitor 7 and 8, CocoaPods and Swift Package Manager. The example
 uses Capacitor 8 (Node 22+, JDK 21, Android SDK 36, Xcode 26+). SPM requires iOS 15+.
 Host applications must also meet their Capacitor version's platform requirements.
 For a new SPM app: `npx cap add ios --packagemanager SPM`, then `npx cap sync ios`.
-The Swift package product is `CapacitorTcpSocket`. iOS uses Network.framework;
-SwiftSocket and its Swift-version workaround are no longer needed.
+The Swift package product is `CapacitorTcpSocket`. The iOS implementation uses
+Apple Network.framework.
 
-**V8 deliberately unifies platform behavior. Read [the migration guide](MIGRATION_V8.md)
-before upgrading from v7.**
+## Socket behavior
 
-## One contract on both native platforms
-
-| Operation or condition | V8 behavior |
+| Operation or condition | Behavior |
 | --- | --- |
 | Read/accept/connect timeout | Rejects with `TIMEOUT`; default 10 whole seconds |
 | Timeout zero | Waits indefinitely; negative/fractional/nonfinite values are invalid |
@@ -43,8 +40,8 @@ success results. Queued read timeouts start when that read begins. Use a positiv
 timeout for periodic waiting; use disconnect to cancel an indefinite read.
 
 Network routes, DNS, OS diagnostics, local-network permissions and background
-execution remain platform responsibilities. Equal API behavior does not imply
-identical packet boundaries or OS scheduling. For arbitrary binary data, use Hex
+execution depend on the operating system. TCP packet boundaries and scheduling
+may vary between devices. For arbitrary binary data, use Hex
 or Base64. Even valid UTF-8 text may be split inside a multibyte character by TCP;
 assemble bytes and use a streaming decoder if your protocol requires streaming text.
 
@@ -71,6 +68,8 @@ try {
 ## Server usage
 
 ```typescript
+import { TcpSocket } from 'capacitor-tcp-socket';
+
 const { server, port } = await TcpSocket.listen({ ipAddress: '127.0.0.1', port: 0 });
 try {
   const { client } = await TcpSocket.accept({ server, timeout: 10 });

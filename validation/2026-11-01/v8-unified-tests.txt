@@ -42,4 +42,10 @@ physical-build
 ℹ duration_ms 313.11025
 
 
-Earlier remote CI run 41308554496 failed: no KVM access; APK install could not find package service; 0 tests executed. KVM configuration added; new result pending.
+Earlier remote CI run 41308554496 failed: no KVM access; APK install could not find package service; 0 tests executed. KVM configuration added; subsequent run 41311790982 passed all jobs.
+
+Remote CI: https://github.com/gee1k/capacitor-tcp-socket/actions/runs/41311790982
+Commit: cc8cdf76e82a9ac32fcd5a3315a1dff7b50574f6
+Android API 35: Finished 3 tests, job success.
+iOS: CocoaPods/SPM example builds succeeded; Executed 9 tests, 0 failures; TEST SUCCEEDED.
+Browser job: success.

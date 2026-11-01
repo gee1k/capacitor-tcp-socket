@@ -1,6 +1,6 @@
 # V8 contract and review
 
-Status: unified implementation completed and locally validated on 2026-11-01; expanded remote CI is pending. Release remains paused during this review. The earlier compatibility-first candidate is superseded; main and npm have not been updated.
+Status: unified implementation validated locally and in remote CI on 2026-11-01. The earlier compatibility-first candidate is superseded. Release preparation follows these completed checks.
 
 ## Agreed contract
 
@@ -26,7 +26,7 @@ Status: unified implementation completed and locally validated on 2026-11-01; ex
 9. Public argument validation and documentation need one shared contract, including optional/default values and malformed encodings.
 10. Tests must cover failure paths, concurrent operations, cancellation, large payloads, listener restart and the same cross-platform behavior, not just successful echo.
 11. iOS Network.framework can put a refused connection into waiting rather than failed; refuse immediately with CONNECT_FAILED instead of misreporting an elapsed timeout.
-12. Remote Android CI lacked permission to use KVM and failed to install the APK because the package service was unavailable (0 tests executed). Added the action's documented KVM setup and require hardware acceleration; a new run must confirm the outcome.
+12. Remote Android CI lacked permission to use KVM and failed to install the APK because the package service was unavailable (0 tests executed). Added the action's documented KVM setup and require hardware acceleration; the new run passed all three Android instrumentation tests.
 
 Resource allocation should follow actual requested data, with bounded read chunks rather than allocating expectLen bytes blindly. No arbitrary business limits on valid payload sizes will be introduced merely for convenience.
 
@@ -44,3 +44,7 @@ TLS, UDP, automatic reconnection and background execution are separate capabilit
 - Browser integration: 2 tests passed. Build, ESLint and npm-package layout checks passed. Logs are in `validation/2026-11-01/v8-unified-*`.
 
 Known limits: this is evidence for the tested devices/runtimes, not proof of every network or device. OS DNS timing and background suspension are not unified. The Capacitor 7/Xcode 27 fixture required an iOS 15 deployment override; iOS 14 was not runtime-tested. Historical failures remain in the earlier records. Breaking changes and migration code are in MIGRATION_V8.md.
+
+## Remote validation
+
+[Run 41311790982](https://github.com/gee1k/capacitor-tcp-socket/actions/runs/41311790982) at cc8cdf7 passed browser, Android emulator and iOS jobs. iOS built both CocoaPods and SPM examples and ran the Swift native tests. This supersedes the earlier failed cloud attempt without erasing it. Subsequent release documentation changes do not change the tested native implementation.
