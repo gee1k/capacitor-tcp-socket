@@ -2,17 +2,39 @@ name: Publish Package to npmjs
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to publish (for example v8.0.0)
+        required: true
+        type: string
+permissions:
+  contents: read
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
     steps:
       - uses: actions/checkout@v4
-      # Setup .npmrc file to publish to npm
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag }}
       - uses: actions/setup-node@v4
         with:
           node-version: '22.x'
           registry-url: 'https://registry.npmjs.org'
-      - run: npm ci
-      - run: npm publish
+      - name: Install npm with trusted publishing support
+        run: npm install --global npm@11.16.0
+      - name: Validate release version
+        run: |
+          node -e 'const v = require("./package.json").version; if (process.env.RELEASE_TAG !== "v" + v) throw new Error("Release tag must match package version");'
+          gh release view "$RELEASE_TAG" --json isDraft --jq 'if .isDraft then error("Cannot publish a draft release") else .isDraft end'
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+      - run: npm ci
+      - run: npm test
+      - name: Publish with npm trusted publishing
+        run: npm publish --provenance --access public
