@@ -1,0 +1,101 @@
+v8.0.0 candidate c7f19ef; iPhone 16 Pro / iOS 27.0.1
+User tapped the smoke button; GUI and native trace verified at 20:52:38.
+Includes nonpositive polling, empty send, odd hex and read after disconnect.
+
+  To Native ->  TcpSocket listen 116846132
+⚡️  TO JS {"port":59373,"server":0}
+⚡️  To Native ->  TcpSocket accept 116846133
+ERROR MESSAGE:  {"code":"TIMEOUT","errorMessage":"Accept timed out","message":"Accept timed out"}
+⚡️  [error] - {"code":"TIMEOUT","errorMessage":"Accept timed out","message":"Accept timed out"}
+⚡️  To Native ->  TcpSocket accept 116846134
+⚡️  To Native ->  TcpSocket connect 116846135
+⚡️  TO JS {"client":0}
+⚡️  TO JS {"client":1}
+⚡️  To Native ->  TcpSocket read 116846136
+⚡️  TO JS {"encoding":"utf8","result":""}
+⚡️  To Native ->  TcpSocket read 116846137
+⚡️  TO JS {"result":"","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket send 116846138
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket send 116846139
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 116846140
+⚡️  TO JS {"encoding":"hex","result":"0f"}
+⚡️  To Native ->  TcpSocket send 116846141
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 116846142
+⚡️  TO JS {"result":"0001","encoding":"hex"}
+⚡️  To Native ->  TcpSocket read 116846143
+⚡️  TO JS {"result":"7fff","encoding":"hex"}
+⚡️  To Native ->  TcpSocket send 116846144
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 116846145
+⚡️  TO JS {"result":"e4b8","encoding":"hex"}
+⚡️  To Native ->  TcpSocket read 116846146
+⚡️  TO JS {"result":"ade6","encoding":"hex"}
+⚡️  To Native ->  TcpSocket read 116846147
+⚡️  TO JS {"result":"9687","encoding":"hex"}
+⚡️  To Native ->  TcpSocket accept 116846148
+⚡️  To Native ->  TcpSocket closeServer 116846149
+⚡️  TO JS {"server":0}
+ERROR MESSAGE:  {"message":"Server closed","errorMessage":"Server closed","code":"CLOSED"}
+⚡️  [error] - {"message":"Server closed","errorMessage":"Server closed","code":"CLOSED"}
+⚡️  To Native ->  TcpSocket send 116846150
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 116846151
+⚡️  TO JS {"result":"41","encoding":"hex"}
+⚡️  To Native ->  TcpSocket disconnect 116846152
+⚡️  TO JS {"client":1}
+⚡️  To Native ->  TcpSocket disconnect 116846153
+⚡️  TO JS {"client":0}
+⚡️  To Native ->  TcpSocket read 116846154
+⚡️  TO JS {"result":"","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket connect 116846155
+⚡️  TO JS {"client":2}
+⚡️  To Native ->  TcpSocket send 116846156
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 116846157
+⚡️  TO JS {"result":"first echo","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket send 116846158
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 116846159
+⚡️  TO JS {"encoding":"utf8","result":"second echo"}
+⚡️  To Native ->  TcpSocket send 116846160
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 116846161
+⚡️  TO JS {"result":"00017fff","encoding":"hex"}
+⚡️  To Native ->  TcpSocket send 116846162
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 116846163
+⚡️  TO JS {"encoding":"base64","result":"AAEC\/w=="}
+⚡️  To Native ->  TcpSocket send 116846164
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 116846165
+⚡️  TO JS {"result":"buff","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 116846166
+⚡️  TO JS {"encoding":"utf8","result":"ered"}
+⚡️  To Native ->  TcpSocket read 116846167
+⚡️  TO JS {"result":"-rea","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 116846168
+⚡️  TO JS {"encoding":"utf8","result":"d-re"}
+⚡️  To Native ->  TcpSocket read 116846169
+⚡️  TO JS {"result":"gres","encoding":"utf8"}
+⚡️  To Native ->  TcpSocket read 116846170
+⚡️  TO JS {"encoding":"utf8","result":"sion"}
+⚡️  To Native ->  TcpSocket read 116846171
+⚡️  TO JS {"encoding":"utf8","result":""}
+⚡️  To Native ->  TcpSocket send 116846172
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 116846173
+⚡️  TO JS {"encoding":"utf8","result":"DELAY\n"}
+⚡️  To Native ->  TcpSocket send 116846174
+⚡️  TO JS undefined
+⚡️  To Native ->  TcpSocket read 116846175
+⚡️  TO JS {"encoding":"utf8","result":""}
+⚡️  To Native ->  TcpSocket read 116846176
+ERROR MESSAGE:  {"errorMessage":"Read failed: Connection closed","message":"Read failed: Connection closed","code":"EOF"}
+⚡️  [error] - {"errorMessage":"Read failed: Connection closed","message":"Read failed: Connection closed","code":"EOF"}
+⚡️  To Native ->  TcpSocket disconnect 116846177
+⚡️  TO JS {"client":2}
+⚡️  To Native ->  TcpSocket disconnect 116846178
+⚡️  TO JS {"client":2}

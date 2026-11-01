@@ -156,3 +156,18 @@ XCTest 动态库最低版本、模拟器 Network / WebKit 辅助功能日志。�
 真机桥接日志（仅测试数据）保存在 `validation/2026-11-01/final-physical-runtime.txt`；未提交包含设备标识的崩溃原文件。
 
 Scene 修改后另在 iPhone 17 Pro / iOS 26.5 模拟器重新构建、安装、启动，20:43:03 完整 TCP smoke test 再次通过；日志见 `final-scene-simulator-runtime.txt`。Info.plist 格式检查和 git diff --check 均通过。
+
+## v8.0.0 最终 review 补充
+
+对比 main（7.1.1）及 SwiftSocket 的 TCPClient/ytcpsocket 实现，发现并修复：
+
+- iOS 非正 read timeout 原本为非阻塞轮询，不能改成无限等待；新增测试验证立即返回且不丢后续数据。
+- iOS 原生读取错误及已断开 client 的读取保留旧版空串结果，显式 rejectOnEOF 仍可拒绝 EOF。
+- Android accept 必须先清理 pending 标记再回调，避免调用方立即再次 accept 时被错误拒绝。
+- 远程 CI 的 npm ci 因 SwiftLint/cosmiconfig 的 TypeScript peer 缺失而失败；以 npm 10 更新锁文件并完成干净安装验证，没有放宽 CI 检查。
+
+修复提交 c7f19ef：SPM/CocoaPods 两套 Swift 测试各 6 项通过；Android 原生 2 项、浏览器 2 项通过；8.0.0 实际 npm 打包产物接入 SPM example 构建通过，ESLint 和 TypeScript/Rollup 构建通过。
+20:52:38 真机完整 smoke test 再次通过，额外覆盖非正 timeout、空串发送、奇数 Hex、断开后读取。此次按钮由用户在手机点击，助手核对页面成功结果和原生桥接日志。
+证据为 `validation/2026-11-01/release-test-results.txt` 和 `release-physical-runtime.txt`。
+
+有效客户端用法未发现能力回退；无效 iOS 端口/非正读取长度现在明确拒绝，错误文本有变化，已写入 CHANGELOG。平台原有默认差异保留，不承诺所有设备无缺陷。历史云端失败记录保留，后续远程 CI 状态以 GitHub 对应提交为准。

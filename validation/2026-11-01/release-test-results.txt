@@ -1,0 +1,23 @@
+spm-tests
+	 Executed 6 tests, with 0 failures (0 unexpected) in 2.099 (2.104) seconds
+	 Executed 6 tests, with 0 failures (0 unexpected) in 2.099 (2.104) seconds
+	 Executed 6 tests, with 0 failures (0 unexpected) in 2.099 (2.106) seconds
+** TEST SUCCEEDED **
+
+pods-tests
+	 Executed 6 tests, with 0 failures (0 unexpected) in 2.214 (2.218) seconds
+	 Executed 6 tests, with 0 failures (0 unexpected) in 2.214 (2.220) seconds
+	 Executed 6 tests, with 0 failures (0 unexpected) in 2.214 (2.221) seconds
+** TEST SUCCEEDED **
+
+android-tests
+BUILD SUCCESSFUL in 17s
+
+browser
+  2 passed (1.3s)
+
+packed-spm
+** BUILD SUCCEEDED **
+
+physical-build
+** BUILD SUCCEEDED **
